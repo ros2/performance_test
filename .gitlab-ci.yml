@@ -35,10 +35,10 @@ build:
     - pip3 install -U colcon-common-extensions pytest
     - git clone https://github.com/eclipse-cyclonedds/cyclonedds.git
     - cd cyclonedds
-    - git checkout 4e805597631ed0dcbdc0eecfe9d532cb75180ae7 # Head as of 20190725
+    - git checkout 3a3fb64a356636e4180f4f64df164ab293b99826 # Head as of 20191118
     - mkdir -p build
     - cd build
-    - cmake -DCMAKE_INSTALL_PREFIX=/opt/cyclonedds ../src
+    - cmake -DCMAKE_INSTALL_PREFIX=/opt/cyclonedds ..
     - cmake --build .
     - sudo cmake --build . --target install
     - find /opt/cyclonedds

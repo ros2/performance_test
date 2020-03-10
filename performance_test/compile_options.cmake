@@ -32,14 +32,22 @@ function(set_compile_options target)
                 -Woverloaded-virtual
                 -Wconversion
                 -Wsign-conversion
-                -Wlogical-op
-                -Wuseless-cast
                 -Wdouble-promotion
-                -Wold-style-cast
-                #-Wnull-dereference    # gcc6
-                #-Wduplicated-branches # gcc7
-                #-Wduplicated-cond     # gcc6
-                #-Wrestrict            # gcc7
+                -Wno-old-style-cast
+                -Wno-unknown-pragmas
+                -Wno-deprecated-declarations
+                $<$<CXX_COMPILER_ID:GNU>:
+                    -Wlogical-op
+                    #-Wuseless-cast
+                    $<$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,6>:
+                        -Wnull-dereference
+                        -Wduplicated-cond
+                    >
+                    $<$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,7>:
+                        -Wduplicated-branches
+                        -Wrestrict
+                    >
+                >
                 -fvisibility=hidden)
         if(CMAKE_BUILD_TYPE EQUAL "Debug")
             set_target_properties(${target} PROPERTIES COMPILE_FLAGS "-Og")

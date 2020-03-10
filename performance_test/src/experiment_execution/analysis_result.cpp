@@ -58,7 +58,7 @@ AnalysisResult::AnalysisResult(
   if (ret != 0) {
     throw std::runtime_error("Could not get system resource usage.");
   }
-  if (m_num_samples_received != m_latency.n()) {
+  if (m_num_samples_received != static_cast<uint64_t>(m_latency.n())) {
     // TODO(andreas.pasternak): Commented out flaky assertion. Need to check if it actually a bug.
     /*throw std::runtime_error("Statistics result sample size does not match: "
                              + std::to_string(m_num_samples_received) + " / "
@@ -183,14 +183,5 @@ std::string AnalysisResult::to_csv_string(const bool pretty_print, std::string s
 
   return ss.str();
 }
-
-#ifdef PERFORMANCE_TEST_ODB_FOR_SQL_ENABLED
-void AnalysisResult::check_statistic_tracker()
-{
-  m_latency.correct_statistics();
-  m_pub_loop_time_reserve.correct_statistics();
-  m_sub_loop_time_reserve.correct_statistics();
-}
-#endif
 
 }  // namespace performance_test

@@ -15,7 +15,6 @@
 #include "experiment_configuration.hpp"
 
 #include <boost/program_options.hpp>
-#include <rclcpp/rclcpp.hpp>
 #include <rmw/rmw.h>
 
 #include <iostream>
@@ -26,6 +25,7 @@
 #include "topics.hpp"
 
 #include "performance_test/version.h"
+#include <rclcpp/rclcpp.hpp> // NOLINT - This include order is required when using OpenDDS
 
 namespace performance_test
 {
@@ -63,7 +63,8 @@ std::ostream & operator<<(std::ostream & stream, const ExperimentConfiguration &
            "\nNot using waitset: " << e.no_waitset() <<
            "\nNot using Connext DDS Micro INTRA: " << e.no_micro_intra() <<
            "\nWith security: " << e.is_with_security() <<
-           "\nRoundtrip Mode: " << e.roundtrip_mode();
+           "\nRoundtrip Mode: " << e.roundtrip_mode() <<
+           "\nIgnore seconds from beginning: " << e.rows_to_ignore();
   } else {
     return stream << "ERROR: Experiment is not yet setup!";
   }
@@ -78,7 +79,7 @@ void ExperimentConfiguration::setup(int argc, char ** argv)
     "Optionally specify a logfile.")("rate,r", po::value<uint32_t>()->default_value(1000),
     "The rate data should be published. Defaults to 1000 Hz. 0 means publish as fast as possible.")(
     "communication,c", po::value<std::string>()->required(),
-    "Communication plugin to use (ROS2, FastRTPS, ConnextDDSMicro, CycloneDDS, "
+    "Communication plugin to use (ROS2, FastRTPS, ConnextDDSMicro, CycloneDDS, OpenDDS, "
     "ROS2PollingSubscription)")(
     "topic,t",
     po::value<std::string>()->required(),
@@ -90,7 +91,7 @@ void ExperimentConfiguration::setup(int argc, char ** argv)
     "Enable keep last QOS. Default is keep all.")("history_depth",
     po::value<uint32_t>()->default_value(1000),
     "Set history depth QOS. Defaults to 1000.")("disable_async",
-    "Disables asyc. pub/sub.")("max_runtime",
+    "Disables async. pub/sub.")("max_runtime",
     po::value<uint64_t>()->default_value(0),
     "Maximum number of seconds to run before exiting. Default (0) is to run forever.")(
     "num_pub_threads,p", po::value<uint32_t>()->default_value(1),
@@ -112,17 +113,26 @@ void ExperimentConfiguration::setup(int argc, char ** argv)
     "no_micro_intra", "Disables the Connext DDS Micro INTRA transport.")(
     "with_security", "Make nodes with deterministic names for use with security")("roundtrip_mode",
     po::value<std::string>()->default_value("None"),
-    "Selects the round trip mode (None, Main, Relay).")
+    "Selects the round trip mode (None, Main, Relay).")("ignore",
+    po::value<uint32_t>()->default_value(0),
+    "Ignores first n seconds of the experiment.")("disable_logging",
+    "Disables experiment logging to stdout.")("expected_num_pubs",
+    po::value<uint32_t>()->default_value(0), "Expected number of publishers for "
+    "wait_for_matched")("expected_num_subs",
+    po::value<uint32_t>()->default_value(0), "Expected number of subscribers for "
+    "wait_for_matched")("wait_for_matched_timeout",
+    po::value<uint32_t>()->default_value(30),
+    "Maximum time[s] to wait for matching publishers/subscribers. Defaults to 30s")
 #ifdef PERFORMANCE_TEST_ODB_FOR_SQL_ENABLED
   ("db_name", po::value<std::string>()->default_value("db_name"),
   "Name of the SQL database.")
 #if defined DATABASE_MYSQL || defined DATABASE_PGSQL
-  ("db_user", po::value<std::string>()->required(),
+  ("db_user", po::value<std::string>(),
   "User name to login to the SQL database.")("db_password",
-    po::value<std::string>()->required(),
+    po::value<std::string>(),
     "Password to login to the SQL database.")("db_host",
-    po::value<std::string>()->required(), "IP address of SQL server.")("db_port",
-    po::value<unsigned int>()->required(), "Port for SQL protocol.")
+    po::value<std::string>(), "IP address of SQL server.")("db_port",
+    po::value<unsigned int>(), "Port for SQL protocol.")
 #endif
 #endif
   ;
@@ -151,14 +161,12 @@ void ExperimentConfiguration::setup(int argc, char ** argv)
       exit(0);
     }
 
-    if (!vm.count("topic")) {
-      throw std::invalid_argument("--topic is required!");
-    }
+    // validate arguments and raise an error if invalid
+    po::notify(vm);
+
     m_topic_name = vm["topic"].as<std::string>();
 
-    if (vm.count("rate")) {
-      m_rate = vm["rate"].as<uint32_t>();
-    }
+    m_rate = vm["rate"].as<uint32_t>();
 
     if (vm.count("check_memory")) {
       m_check_memory = true;
@@ -166,9 +174,15 @@ void ExperimentConfiguration::setup(int argc, char ** argv)
 
     if (vm["communication"].as<std::string>() == "ROS2") {
       m_com_mean = CommunicationMean::ROS2;
+      #ifdef PERFORMANCE_TEST_ODB_FOR_SQL_ENABLED
+      m_com_mean_str = "ROS2";
+      #endif
     } else if (vm["communication"].as<std::string>() == "ROS2PollingSubscription") {
 #ifdef PERFORMANCE_TEST_POLLING_SUBSCRIPTION_ENABLED
       m_com_mean = CommunicationMean::ROS2PollingSubscription;
+      #ifdef PERFORMANCE_TEST_ODB_FOR_SQL_ENABLED
+      m_com_mean_str = "ROS2PollingSubscription";
+      #endif
 #else
       throw std::invalid_argument(
               "You must compile with PERFORMANCE_TEST_POLLING_SUBSCRIPTION_ENABLED flag as ON to "
@@ -177,6 +191,9 @@ void ExperimentConfiguration::setup(int argc, char ** argv)
     } else if (vm["communication"].as<std::string>() == "FastRTPS") {
 #ifdef PERFORMANCE_TEST_FASTRTPS_ENABLED
       m_com_mean = CommunicationMean::FASTRTPS;
+      #ifdef PERFORMANCE_TEST_ODB_FOR_SQL_ENABLED
+      m_com_mean_str = "FASTRTPS";
+      #endif
 #else
       throw std::invalid_argument(
               "You must compile with FastRTPS support to enable it as communication mean.");
@@ -184,6 +201,9 @@ void ExperimentConfiguration::setup(int argc, char ** argv)
     } else if (vm["communication"].as<std::string>() == "ConnextDDSMicro") {
 #ifdef PERFORMANCE_TEST_CONNEXTDDSMICRO_ENABLED
       m_com_mean = CommunicationMean::CONNEXTDDSMICRO;
+      #ifdef PERFORMANCE_TEST_ODB_FOR_SQL_ENABLED
+      m_com_mean_str = "CONNEXTDDSMICRO";
+      #endif
 #else
       throw std::invalid_argument(
               "You must compile with ConnextDDSMicro support to enable it as communication mean.");
@@ -191,18 +211,28 @@ void ExperimentConfiguration::setup(int argc, char ** argv)
     } else if (vm["communication"].as<std::string>() == "CycloneDDS") {
 #ifdef PERFORMANCE_TEST_CYCLONEDDS_ENABLED
       m_com_mean = CommunicationMean::CYCLONEDDS;
+      #ifdef PERFORMANCE_TEST_ODB_FOR_SQL_ENABLED
+      m_com_mean_str = "CYCLONEDDS";
+      #endif
 #else
       throw std::invalid_argument(
               "You must compile with CycloneDDS support to enable it as communication mean.");
 #endif
+    } else if (vm["communication"].as<std::string>() == "OpenDDS") {
+#ifdef PERFORMANCE_TEST_OPENDDS_ENABLED
+      m_com_mean = CommunicationMean::OPENDDS;
+      #ifdef PERFORMANCE_TEST_ODB_FOR_SQL_ENABLED
+      m_com_mean_str = "OPENDDS";
+      #endif
+#else
+      throw std::invalid_argument(
+              "You must compile with OpenDDS support to enable it as communication mean");
+#endif
+    } else {
+      throw std::invalid_argument("Selected communication mean not supported!");
     }
 
-    if (vm.count("dds_domain_id")) {
-      m_dds_domain_id = vm["dds_domain_id"].as<uint32_t>();
-      if (m_com_mean == CommunicationMean::ROS2 && m_dds_domain_id != 0) {
-        throw std::invalid_argument("ROS 2 does not support setting the domain ID.");
-      }
-    }
+    m_dds_domain_id = vm["dds_domain_id"].as<uint32_t>();
 
     if (vm.count("reliable")) {
       m_qos.reliability = QOSAbstraction::Reliability::RELIABLE;
@@ -219,9 +249,7 @@ void ExperimentConfiguration::setup(int argc, char ** argv)
     } else {
       m_qos.history_kind = QOSAbstraction::HistoryKind::KEEP_ALL;
     }
-    if (vm.count("history_depth")) {
-      m_qos.history_depth = vm["history_depth"].as<uint32_t>();
-    }
+    m_qos.history_depth = vm["history_depth"].as<uint32_t>();
     if (vm.count("disable_async")) {
       if (m_com_mean == CommunicationMean::ROS2) {
         throw std::invalid_argument("ROS 2 does not support disabling async. publishing.");
@@ -230,11 +258,20 @@ void ExperimentConfiguration::setup(int argc, char ** argv)
     }
 
     m_max_runtime = vm["max_runtime"].as<uint64_t>();
+    m_rows_to_ignore = vm["ignore"].as<uint32_t>();
 
     m_number_of_publishers = vm["num_pub_threads"].as<uint32_t>();
     m_number_of_subscribers = vm["num_sub_threads"].as<uint32_t>();
 
     if (m_number_of_publishers > 1) {
+      throw std::invalid_argument("More than one publisher is not supported at the moment");
+    }
+
+    m_expected_num_pubs = vm["expected_num_pubs"].as<uint32_t>();
+    m_expected_num_subs = vm["expected_num_subs"].as<uint32_t>();
+    m_wait_for_matched_timeout = vm["wait_for_matched_timeout"].as<uint32_t>();
+
+    if (m_expected_num_pubs > 1) {
       throw std::invalid_argument("More than one publisher is not supported at the moment");
     }
 
@@ -253,8 +290,12 @@ void ExperimentConfiguration::setup(int argc, char ** argv)
       cpus = 62;
     }
     if (prio != 0 || cpus != 0) {
+#if PERFORMANCE_TEST_RT_ENABLED
       pre_proc_rt_init(cpus, prio);
       m_is_drivepx_rt = true;
+#else
+      throw std::invalid_argument("Built with RT optimizations disabled");
+#endif
     }
     m_use_single_participant = false;
     if (vm.count("use_single_participant")) {
@@ -287,31 +328,26 @@ void ExperimentConfiguration::setup(int argc, char ** argv)
     m_with_security = false;
     if (vm.count("with_security")) {
       if (m_com_mean != CommunicationMean::ROS2) {
-        throw std::invalid_argument(
-                "Only ROS2 supports security!");
+        throw std::invalid_argument("Only ROS2 supports security!");
       } else {
         m_with_security = true;
       }
     }
     m_roundtrip_mode = RoundTripMode::NONE;
-    if (vm.count("roundtrip_mode")) {
-      const auto mode = vm["roundtrip_mode"].as<std::string>();
-      if (mode == "None") {
-        m_roundtrip_mode = RoundTripMode::NONE;
-      } else if (mode == "Main") {
-        m_roundtrip_mode = RoundTripMode::MAIN;
-      } else if (mode == "Relay") {
-        m_roundtrip_mode = RoundTripMode::RELAY;
-      } else {
-        throw std::invalid_argument("Invalid roundtrip mode: " + mode);
-      }
+    const auto mode = vm["roundtrip_mode"].as<std::string>();
+    if (mode == "None") {
+      m_roundtrip_mode = RoundTripMode::NONE;
+    } else if (mode == "Main") {
+      m_roundtrip_mode = RoundTripMode::MAIN;
+    } else if (mode == "Relay") {
+      m_roundtrip_mode = RoundTripMode::RELAY;
+    } else {
+      throw std::invalid_argument("Invalid roundtrip mode: " + mode);
     }
     m_rmw_implementation = rmw_get_implementation_identifier();
 
 #ifdef PERFORMANCE_TEST_ODB_FOR_SQL_ENABLED
-    if (vm.count("db_name")) {
-      m_db_name = vm["db_name"].as<std::string>();
-    }
+    m_db_name = vm["db_name"].as<std::string>();
 #if defined DATABASE_MYSQL || defined DATABASE_PGSQL
     if (vm.count("db_user")) {
       m_db_user = vm["db_user"].as<std::string>();
@@ -341,6 +377,10 @@ void ExperimentConfiguration::setup(int argc, char ** argv)
     if (vm.count("logfile")) {
       m_logfile = vm["logfile"].as<std::string>();
       open_file();
+    }
+    // If we need to disable logging to stdout
+    if (vm.count("disable_logging")) {
+      m_disable_logging = true;
     }
   } catch (const std::exception & e) {
     std::cerr << "ERROR: ";
@@ -414,7 +454,11 @@ uint64_t ExperimentConfiguration::max_runtime() const
   check_setup();
   return m_max_runtime;
 }
-
+uint32_t ExperimentConfiguration::rows_to_ignore() const
+{
+  check_setup();
+  return m_rows_to_ignore;
+}
 uint32_t ExperimentConfiguration::number_of_publishers() const
 {
   check_setup();
@@ -424,6 +468,23 @@ uint32_t ExperimentConfiguration::number_of_subscribers() const
 {
   check_setup();
   return m_number_of_subscribers;
+}
+
+uint32_t ExperimentConfiguration::expected_num_pubs() const
+{
+  check_setup();
+  return m_expected_num_pubs;
+}
+uint32_t ExperimentConfiguration::expected_num_subs() const
+{
+  check_setup();
+  return m_expected_num_subs;
+}
+
+std::chrono::seconds ExperimentConfiguration::expected_wait_for_matched_timeout() const
+{
+  check_setup();
+  return std::chrono::seconds(m_wait_for_matched_timeout);
 }
 
 bool ExperimentConfiguration::check_memory() const
@@ -466,6 +527,12 @@ bool ExperimentConfiguration::is_with_security() const
 {
   check_setup();
   return m_with_security;
+}
+
+bool ExperimentConfiguration::disable_logging() const
+{
+  check_setup();
+  return m_disable_logging;
 }
 
 ExperimentConfiguration::RoundTripMode ExperimentConfiguration::roundtrip_mode() const
@@ -516,7 +583,7 @@ boost::uuids::uuid ExperimentConfiguration::id() const
 
 void ExperimentConfiguration::log(const std::string & msg) const
 {
-  if (false == m_is_drivepx_rt) {
+  if (!m_disable_logging) {
     std::cout << msg << std::endl;
   }
   if (m_os.is_open()) {
@@ -540,7 +607,7 @@ void ExperimentConfiguration::open_file()
 {
   check_setup();
   auto t = std::time(nullptr);
-  auto tm = *std::localtime(&t);
+  auto tm = *std::gmtime(&t);
   std::ostringstream oss;
   oss << m_logfile.c_str() << "_" << m_topic_name << std::put_time(&tm, "_%d-%m-%Y_%H-%M-%S");
   m_final_logfile_name = oss.str();

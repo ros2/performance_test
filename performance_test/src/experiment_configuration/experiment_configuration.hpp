@@ -25,12 +25,15 @@
 
 #include "qos_abstraction.hpp"
 #include "communication_mean.hpp"
+#if PERFORMANCE_TEST_RT_ENABLED
 #include "../utilities/rt_enabler.hpp"
+#endif
 #include "external_info_storage.hpp"
 
 #ifdef PERFORMANCE_TEST_ODB_FOR_SQL_ENABLED
   #include <odb/core.hxx>
 #endif
+#include <chrono>
 
 namespace performance_test
 {
@@ -42,7 +45,7 @@ namespace performance_test
  * configuration by command line arguments are supported.
  */
 #ifdef PERFORMANCE_TEST_ODB_FOR_SQL_ENABLED
-#pragma db model version(1, 3, closed)
+#pragma db model version(1, 5, closed)
 class AnalysisResult;
   #pragma db value(QOSAbstraction) definition
   #pragma db value(ExternalInfoStorage) definition
@@ -102,12 +105,24 @@ public:
   /// \returns Returns the time the application should run until it terminates [s]. This will
   /// throw if the experiment configuration is not set up.
   uint64_t max_runtime() const;
+  /// \returns Returns the number of seconds to be ignored at the beginning of the experiment.
+  /// This will throw if the experiment configuration is not set up.
+  uint32_t rows_to_ignore() const;
   /// \returns Returns the configured number of publishers. This will throw if the experiment
   /// configuration is not set up.
   uint32_t number_of_publishers() const;
   /// \returns Returns the configured number of subscribers. This will throw if the experiment
   /// configuration is not set up.
   uint32_t number_of_subscribers() const;
+  /// \returns Returns the expected number of publishers for wait_for_matched if enabled. This
+  /// will throw if the experiment configuration is not set up.
+  uint32_t expected_num_pubs() const;
+  /// \returns Returns the expected number of subscribers for wait_for_matched if enabled. This
+  /// will throw if the experiment configuration is not set up.
+  uint32_t expected_num_subs() const;
+  /// \returns Returns the expected timeout for wait_for_matched if enabled. This
+  /// will throw if the experiment configuration is not set up.
+  std::chrono::seconds expected_wait_for_matched_timeout() const;
   /// \returns Returns if memory operations should be logged.
   bool check_memory() const;
   /// \returns Returns if ROS shm should be used. This will throw if the experiment
@@ -127,6 +142,9 @@ public:
   /// \returns Returns if Drivepx RT is set or not. This will throw if the experiment configuration
   /// is not set up.
   bool is_drivepx_rt() const;
+  /// \returns Returns if logging of performance_test results is disabled for stdout.
+  /// This will throw if the experiment configuration is not setup
+  bool disable_logging() const;
   bool is_with_security() const;
   /// \returns Returns the roundtrip mode.
   RoundTripMode roundtrip_mode() const;
@@ -177,14 +195,19 @@ private:
     m_dds_domain_id(),
     m_rate(),
     m_max_runtime(),
+    m_rows_to_ignore(),
     m_number_of_publishers(),
     m_number_of_subscribers(),
+    m_expected_num_pubs(),
+    m_expected_num_subs(),
+    m_wait_for_matched_timeout(),
     m_check_memory(false),
     m_use_ros_shm(false),
     m_use_single_participant(false),
     m_no_waitset(false),
     m_no_micro_intra(false),
     m_is_drivepx_rt(false),
+    m_disable_logging(false),
     m_roundtrip_mode(RoundTripMode::NONE)
   {}
 
@@ -219,6 +242,9 @@ private:
 #endif
   mutable std::ofstream m_os;
 
+#ifdef PERFORMANCE_TEST_ODB_FOR_SQL_ENABLED
+  #pragma db transient
+#endif
   CommunicationMean m_com_mean;
   uint32_t m_dds_domain_id;
   QOSAbstraction m_qos;
@@ -226,9 +252,24 @@ private:
   std::string m_topic_name;
 
   uint64_t m_max_runtime;
-
+#ifdef PERFORMANCE_TEST_ODB_FOR_SQL_ENABLED
+  #pragma db transient
+#endif
+  uint32_t m_rows_to_ignore;
   uint32_t m_number_of_publishers;
   uint32_t m_number_of_subscribers;
+#ifdef PERFORMANCE_TEST_ODB_FOR_SQL_ENABLED
+  #pragma db transient
+#endif
+  uint32_t m_expected_num_pubs;
+#ifdef PERFORMANCE_TEST_ODB_FOR_SQL_ENABLED
+  #pragma db transient
+#endif
+  uint32_t m_expected_num_subs;
+#ifdef PERFORMANCE_TEST_ODB_FOR_SQL_ENABLED
+#pragma db transient
+#endif
+  uint32_t m_wait_for_matched_timeout;
   bool m_check_memory;
   bool m_use_ros_shm;
   bool m_use_single_participant;
@@ -236,6 +277,10 @@ private:
   bool m_no_micro_intra;
   bool m_is_drivepx_rt;
   bool m_with_security;
+#ifdef PERFORMANCE_TEST_ODB_FOR_SQL_ENABLED
+  #pragma db transient
+#endif
+  bool m_disable_logging;
 
   RoundTripMode m_roundtrip_mode;
 
@@ -251,6 +296,7 @@ private:
   bool m_use_odb = true;
   #pragma db transient
   std::string m_db_name;
+  std::string m_com_mean_str;
 #if defined DATABASE_MYSQL || defined DATABASE_PGSQL
   #pragma db transient
   std::string m_db_user;

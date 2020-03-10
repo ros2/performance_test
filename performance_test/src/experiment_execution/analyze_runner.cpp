@@ -140,11 +140,13 @@ void AnalyzeRunner::run()
     std::for_each(m_pub_runners.begin(), m_pub_runners.end(), [](auto & a) {a->sync_reset();});
     std::for_each(m_sub_runners.begin(), m_sub_runners.end(), [](auto & a) {a->sync_reset();});
 
+#if PERFORMANCE_TEST_RT_ENABLED
     /// Id drivepx_rt is set and this is the first loop, set the post RT init settings
     if (m_is_first_entry && m_ec.is_drivepx_rt()) {
       post_proc_rt_init();
       m_is_first_entry = false;
     }
+#endif
 
     auto now = std::chrono::steady_clock::now();
     auto loop_diff_start = now - loop_start;
@@ -208,17 +210,22 @@ void AnalyzeRunner::analyze(
     StatisticsTracker(ltr_sub_vec),
     cpu_usage_tracker.get_cpu_usage()
   );
-
-  m_ec.log(result->to_csv_string(true));
-
+  if (std::chrono::duration_cast<std::chrono::seconds>(experiment_diff_start).count() >
+    m_ec.rows_to_ignore())
+  {
+    m_ec.log(result->to_csv_string(true));
   #ifdef PERFORMANCE_TEST_ODB_FOR_SQL_ENABLED
-  if (m_ec.use_odb()) {
-    result->set_configuration(&m_ec);
-    m_ec.get_results().push_back(result);
-    result->check_statistic_tracker();
-    m_db->persist(result);
-  }
+    if (m_ec.use_odb()) {
+      try {
+        result->set_configuration(&m_ec);
+        m_ec.get_results().push_back(result);
+        m_db->persist(result);
+      } catch (odb::exception & e) {
+        std::cerr << "Skipping storing to database: " << e.what() << std::endl;
+      }
+    }
   #endif
+  }
 }
 
 bool AnalyzeRunner::check_exit(std::chrono::steady_clock::time_point experiment_start) const
@@ -236,7 +243,7 @@ bool AnalyzeRunner::check_exit(std::chrono::steady_clock::time_point experiment_
   const double runtime_sec =
     std::chrono::duration<double>(std::chrono::steady_clock::now() - experiment_start).count();
 
-  if (runtime_sec > m_ec.max_runtime()) {
+  if (runtime_sec > static_cast<double>(m_ec.max_runtime())) {
     std::cout << "Maximum runtime reached. Exiting." << std::endl;
     return true;
   } else {

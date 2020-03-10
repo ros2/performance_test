@@ -13,18 +13,22 @@
 # limitations under the License.
 
 cmake_minimum_required(VERSION 3.5)
-
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
-include(compile_options)
 project(performance_test)
+
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
+include(compile_options)
 
 set(OPTIONAL_AMENT_DEPENDENCES)
 set(OPTIONAL_LIBRARIES)
 
 # Default to C++14
 set(CMAKE_CXX_STANDARD 14)
-find_package(Boost COMPONENTS program_options REQUIRED)
+find_package(Boost COMPONENTS program_options timer REQUIRED)
 find_package(ament_cmake REQUIRED)
+
+if(PERFORMANCE_TEST_OPENDDS_ENABLED)
+    add_definitions(-DPERFORMANCE_TEST_OPENDDS_ENABLED)
+endif()
 
 # FastRTPS
 option(PERFORMANCE_TEST_FASTRTPS_ENABLED "Enable FastRTPS" ON)
@@ -35,6 +39,14 @@ if(PERFORMANCE_TEST_FASTRTPS_ENABLED)
   add_definitions(-DPERFORMANCE_TEST_FASTRTPS_ENABLED)
 endif()
 
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+  set(PERFORMANCE_TEST_RT_ENABLED_DEFAULT ON)
+else()
+  set(PERFORMANCE_TEST_RT_ENABLED_DEFAULT OFF)
+endif()
+option(PERFORMANCE_TEST_RT_ENABLED
+  "Enable options for thread and memory optimization. This may not build on all platforms"
+  ${PERFORMANCE_TEST_RT_ENABLED_DEFAULT})
 find_package(rclcpp REQUIRED)
 find_package(rmw REQUIRED)
 find_package(builtin_interfaces REQUIRED)
@@ -67,12 +79,18 @@ if(PERFORMANCE_TEST_FASTRTPS_ENABLED)
   add_subdirectory(src/idlgen/fast_rtps)
 endif()
 
+if(PERFORMANCE_TEST_OPENDDS_ENABLED)
+    set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+    add_subdirectory(src/idlgen/opendds)
+    include_directories(${OPENDDS_IDL_INCLUDE_DIR} ${PARENT_DDS_ROOT_INCLUDE})
+endif()
+
 # This is a workaround for broken include paths on some systems.
 include_directories(${FastRTPS_INCLUDE_DIR} ${FastRTPS_INCLUDE_DIR}/fastrtps/include ${fastcdr_INCLUDE_DIR})
 include_directories(include ${FAST_RTPS_IDL_INCLUDE_DIR} ${osrf_testing_tools_cpp_INCLUDE_DIR})
 
 find_package(micro_dds_cmake_module QUIET)
-if(${micro_dds_cmake_module_FOUND_AMENT_PACKAGE})
+if(${micro_dds_cmake_module_FOUND})
     find_package(MicroDDS MODULE)
     if(MicroDDS_FOUND)
         set(PERFORMANCE_TEST_CONNEXTDDSMICRO_ENABLED TRUE)
@@ -163,11 +181,15 @@ set(sources
     src/experiment_configuration/experiment_configuration.cpp
     src/experiment_configuration/external_info_storage.hpp
     src/experiment_configuration/external_info_storage.cpp
-    src/utilities/rt_enabler.hpp
     src/utilities/spin_lock.hpp
     src/utilities/statistics_tracker.hpp
     src/utilities/cpu_usage_tracker.hpp
 )
+
+if(PERFORMANCE_TEST_RT_ENABLED)
+  add_definitions(-DPERFORMANCE_TEST_RT_ENABLED)
+  list(APPEND sources src/utilities/rt_enabler.hpp)
+endif()
 
 # Use ODB support to create SQL database
 option(PERFORMANCE_TEST_ODB_SQLITE "Enable ODB with SQLITE" OFF)
@@ -185,7 +207,7 @@ if(PERFORMANCE_TEST_ODB_SQLITE OR PERFORMANCE_TEST_ODB_MYSQL OR PERFORMANCE_TEST
   set(PERFORMANCE_TEST_ODB_FOR_SQL_ENABLED ON)
   add_definitions(-DPERFORMANCE_TEST_ODB_FOR_SQL_ENABLED)
 
-  list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules")
+  list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
   find_package(ODB REQUIRED COMPONENTS sqlite OPTIONAL_COMPONENTS mysql pgsql)
   include(${ODB_USE_FILE})
 
@@ -229,6 +251,12 @@ if(PERFORMANCE_TEST_CYCLONEDDS_ENABLED)
     )
 endif()
 
+if(PERFORMANCE_TEST_OPENDDS_ENABLED)
+    set(sources ${sources}
+        src/communication_abstractions/opendds_communicator.hpp
+    )
+endif()
+
 set(EXE_NAME perf_test)
 
 add_executable(${EXE_NAME} ${${PROJECT_NAME}_SOURCES} ${sources} ${${PROJECT_NAME}_HEADERS})
@@ -238,7 +266,7 @@ set_compile_options(${EXE_NAME})
 # Try to bake the githash into the perf_test EXE:
 execute_process(
   COMMAND ./version_check.bash
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   OUTPUT_VARIABLE PERF_TEST_VERSION
 )
 add_definitions(-DPERFORMANCE_TEST_VERSION="${PERF_TEST_VERSION}")
@@ -280,10 +308,26 @@ if(PERFORMANCE_TEST_FASTRTPS_ENABLED)
       fastcdr)
 endif()
 
+
 if(PERFORMANCE_TEST_CYCLONEDDS_ENABLED)
   target_link_libraries(${EXE_NAME}
       cyclonedds_idl
       CycloneDDS::ddsc)
+endif()
+if(PERFORMANCE_TEST_OPENDDS_ENABLED)
+    set(DDS_DYN_LIBS  ${PARENT_DDS_ROOT_LIBS}/libACE.so
+                      ${PARENT_DDS_ROOT_LIBS}/libTAO.so
+                      ${PARENT_DDS_ROOT_LIBS}/libOpenDDS_Dcps.so
+                      ${PARENT_DDS_ROOT_LIBS}/libOpenDDS_Rtps.so
+                      ${PARENT_DDS_ROOT_LIBS}/libOpenDDS_Rtps_Udp.so
+                      ${PARENT_DDS_ROOT_LIBS}/libTAO_PortableServer.so
+                      ${PARENT_DDS_ROOT_LIBS}/libTAO_PortableServer.so
+                      ${PARENT_DDS_ROOT_LIBS}/libTAO_PI.so
+                      ${PARENT_DDS_ROOT_LIBS}/libTAO_CodecFactory.so
+                      ${PARENT_DDS_ROOT_LIBS}/libTAO_AnyTypeCode.so
+                      ${PARENT_DDS_ROOT_LIBS}/libTAO_BiDirGIOP.so)
+
+    target_link_libraries(${EXE_NAME} opendds_idl ${DDS_DYN_LIBS})
 endif()
 
 if(BUILD_TESTING)

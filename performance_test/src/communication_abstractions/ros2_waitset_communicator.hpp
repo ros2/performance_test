@@ -50,28 +50,27 @@ public:
     if (!m_polling_subscription) {
       m_polling_subscription = this->m_node->template create_polling_subscription<DataType>(
         Topic::topic_name() + this->m_ec.sub_topic_postfix(), this->m_ROS2QOSAdapter);
+      if (this->m_ec.expected_num_pubs() > 0) {
+        m_polling_subscription->wait_for_matched(this->m_ec.expected_num_pubs(),
+          this->m_ec.expected_wait_for_matched_timeout());
+      }
       m_waitset = std::make_unique<rclcpp::Waitset<>>(m_polling_subscription);
     }
-    try {
-      const auto wait_ret = m_waitset->wait(std::chrono::milliseconds(100));
-      if (wait_ret.any()) {
-        const auto loaned_msg = m_polling_subscription->take(RCLCPP_LENGTH_UNLIMITED);
-        const std::lock_guard<std::mutex> lock(m_mutex);
-        for (const auto msg : loaned_msg) {
-          if (msg.info().valid()) {
-            this->template callback(msg.data());
-          }
+    const auto wait_ret = m_waitset->wait(std::chrono::milliseconds(100), false);
+    if (wait_ret.any()) {
+      const auto loaned_msg = m_polling_subscription->take(RCLCPP_LENGTH_UNLIMITED);
+      const std::lock_guard<decltype(this->get_lock())> lock(this->get_lock());
+      for (const auto msg : loaned_msg) {
+        if (msg.info().valid()) {
+          this->template callback(msg.data());
         }
       }
-    } catch (const rclcpp::TimeoutError &) {
-      std::cerr << "Waitset timed out without receiving a sample." << std::endl;
     }
   }
 
 private:
   std::shared_ptr<::rclcpp::PollingSubscription<DataType>> m_polling_subscription;
   std::unique_ptr<rclcpp::Waitset<>> m_waitset;
-  std::mutex m_mutex;
 };
 
 }  // namespace performance_test

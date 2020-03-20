@@ -210,7 +210,7 @@ public:
     }
 
     if (!m_ec.no_waitset()) {
-      m_subscriber->wait_for_unread_samples({3, 0});
+      m_subscriber->waitForUnreadMessage();
     }
     lock();
     while (m_subscriber->takeNextData(static_cast<void *>(&m_data), &m_info)) {

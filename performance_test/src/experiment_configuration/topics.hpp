@@ -1123,8 +1123,8 @@ using TopicTypeList = std::tuple<Array1k, Array4k, Array16k, Array32k, Array60k,
 inline std::vector<std::string> supported_topic_names()
 {
   std::vector<std::string> result;
-  performance_test::for_each(TopicTypeList(), [&result](auto topic) {
-      using T = decltype(topic);
+  performance_test::for_each(TopicTypeList(), [&result](const auto & topic) {
+      using T = std::remove_reference_t<std::remove_cv_t<decltype(topic)>>;
       result.push_back(T::topic_name());
     });
   return result;

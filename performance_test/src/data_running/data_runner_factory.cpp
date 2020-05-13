@@ -14,10 +14,10 @@
 
 #include "data_runner_factory.hpp"
 
+#include <performance_test/for_each.hpp>
+
 #include <string>
 #include <memory>
-
-#include <performance_test/for_each.hpp>
 
 #ifdef PERFORMANCE_TEST_POLLING_SUBSCRIPTION_ENABLED
   #include "../communication_abstractions/ros2_waitset_communicator.hpp"

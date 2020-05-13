@@ -27,7 +27,7 @@ namespace performance_test
  * \param f functor to be applied over each element
  * \returns number of iterated elements
  */
-template<std::size_t I = 0, typename FuncT, typename... Tp>
+template<std::size_t I = 0, typename FuncT, typename ... Tp>
 typename std::enable_if<I == sizeof...(Tp), size_t>::type
 for_each(const std::tuple<Tp...> & t, FuncT f)
 {
@@ -36,7 +36,7 @@ for_each(const std::tuple<Tp...> & t, FuncT f)
   return I;
 }
 
-template<std::size_t I = 0, typename FuncT, typename... Tp>
+template<std::size_t I = 0, typename FuncT, typename ... Tp>
 typename std::enable_if<I != sizeof...(Tp), size_t>::type
 for_each(const std::tuple<Tp...> & t, FuncT f)
 {
@@ -44,6 +44,6 @@ for_each(const std::tuple<Tp...> & t, FuncT f)
   return for_each<I + 1, FuncT, Tp...>(t, f);
 }
 
-}  // performance_test
+}  // namespace performance_test
 
 #endif  // PERFORMANCE_TEST__FOR_EACH_HPP_

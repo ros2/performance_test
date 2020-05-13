@@ -15,12 +15,12 @@ module dds_
 
 
 
-typedef octet performance_test_msgs__Array8m__octet_array_4194304[4194304];
+typedef octet performance_test_msgs__Array8m__octet_array_8388608[8388608];
 
 struct Array8m_
 {
 
-performance_test_msgs__Array8m__octet_array_4194304 array_;
+performance_test_msgs__Array8m__octet_array_8388608 array_;
   long long time_;
   unsigned long long id_;
 

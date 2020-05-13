@@ -16,13 +16,14 @@
 #define PERFORMANCE_TEST__FOR_EACH_HPP_
 
 #include <tuple>
-#include <utility> 
+#include <utility>
 
 namespace performance_test
 {
 
 /// Iterates over std::tuple types
 /**
+ * \param t tuple to be iterated
  * \param f functor to be applied over each element
  * \returns number of iterated elements
  */

@@ -1124,7 +1124,7 @@ inline std::vector<std::string> supported_topic_names()
 {
   std::vector<std::string> result;
   performance_test::for_each(TopicTypeList(), [&result](const auto & topic) {
-      using T = std::remove_reference_t<std::remove_cv_t<decltype(topic)>>;
+      using T = std::remove_cv_t<std::remove_reference_t<decltype(topic)>>;
       result.push_back(T::topic_name());
     });
   return result;

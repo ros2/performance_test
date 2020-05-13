@@ -54,7 +54,7 @@ std::shared_ptr<DataRunnerBase> DataRunnerFactory::get(
   performance_test::for_each(
     topics::TopicTypeList(),
     [&ptr, requested_topic_name, com_mean, run_type](const auto & topic) {
-      using T = std::remove_reference_t<std::remove_cv_t<decltype(topic)>>;
+      using T = std::remove_cv_t<std::remove_reference_t<decltype(topic)>>;
       if (T::topic_name() == requested_topic_name) {
         if (ptr) {
           throw std::runtime_error("It seems that two topics have the same name");

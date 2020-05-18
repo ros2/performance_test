@@ -131,7 +131,7 @@ private:
   /// The function running inside the thread doing all the work.
   void thread_function()
   {
-    typename TCommunicator::DataType data;
+    auto data = std::make_unique<typename TCommunicator::DataType>();
 
     auto next_run = std::chrono::steady_clock::now() +
       std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -147,7 +147,7 @@ private:
       {
         std::chrono::nanoseconds epoc_time =
           std::chrono::steady_clock::now().time_since_epoch();
-        m_com.publish(data, epoc_time);
+        m_com.publish(*data, epoc_time);
       }
       if (m_run_type == RunType::SUBSCRIBER) {
         m_com.update_subscription();

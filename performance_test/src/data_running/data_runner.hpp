@@ -20,6 +20,7 @@
 #include <osrf_testing_tools_cpp/memory_tools/memory_tools.hpp>
 #endif
 #include <atomic>
+#include <memory>
 #include <thread>
 
 #include "../utilities/spin_lock.hpp"

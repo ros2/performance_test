@@ -3,7 +3,7 @@
 
 # Introduction
 
-**Version Support:** ROS2 Dashing, Fast-RTPS 1.8.0
+**Version Support:** ROS2 Dashing, Fast-DDS 2.0.x
 
 This test allows you to test performance and latency of various communication means
 like ROS 2, ROS 2 Waitset, FastRTPS, Connext DDS Micro and Eclipse Cyclone DDS.

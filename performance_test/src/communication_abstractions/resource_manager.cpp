@@ -128,16 +128,18 @@ DDSDomainParticipant * ResourceManager::connext_DDS_micro_participant() const
     factory = DDSDomainParticipantFactory::get_instance();
     registry = factory->get_registry();
 
-    if (!registry->register_component("wh",
-      WHSMHistoryFactory::get_interface(),
-      nullptr, nullptr))
+    if (!registry->register_component(
+        "wh",
+        WHSMHistoryFactory::get_interface(),
+        nullptr, nullptr))
     {
       throw std::runtime_error("failed to register wh");
     }
 
-    if (!registry->register_component("rh",
-      RHSMHistoryFactory::get_interface(),
-      nullptr, nullptr))
+    if (!registry->register_component(
+        "rh",
+        RHSMHistoryFactory::get_interface(),
+        nullptr, nullptr))
     {
       throw std::runtime_error("failed to register rh");
     }
@@ -160,10 +162,11 @@ DDSDomainParticipant * ResourceManager::connext_DDS_micro_participant() const
 
     *udp_property->allow_interface.get_reference(1) = DDS_String_dup("eth0");
 
-    if (!registry->register_component(NETIO_DEFAULT_UDP_NAME,
-      UDPInterfaceFactory::get_interface(),
-      &udp_property->_parent._parent,
-      nullptr))
+    if (!registry->register_component(
+        NETIO_DEFAULT_UDP_NAME,
+        UDPInterfaceFactory::get_interface(),
+        &udp_property->_parent._parent,
+        nullptr))
     {
       throw std::runtime_error("failed to register udp");
     }

@@ -205,8 +205,9 @@ private:
   {
     const bool is_single_participant = ResourceManager::get().is_using_single_participant();
     if (m_single_participant_topic == 0 || !is_single_participant) {
-      m_topic = dds_create_topic(m_participant, Topic::CycloneDDSDesc(),
-          Topic::topic_name().c_str(), nullptr, nullptr);
+      m_topic = dds_create_topic(
+        m_participant, Topic::CycloneDDSDesc(),
+        Topic::topic_name().c_str(), nullptr, nullptr);
       m_single_participant_topic = m_topic;
       if (m_topic < 0) {
         throw std::runtime_error("failed to create topic");

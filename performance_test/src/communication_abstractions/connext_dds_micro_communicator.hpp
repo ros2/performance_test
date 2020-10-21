@@ -24,6 +24,7 @@
 #include "communicator.hpp"
 #include "resource_manager.hpp"
 
+
 namespace performance_test
 {
 
@@ -150,6 +151,8 @@ public:
       if (m_typed_datawriter == nullptr) {
         throw std::runtime_error("failed datawriter narrow");
       }
+
+      init_data(data);
     }
     lock();
     data.time_ = time.count();
@@ -213,10 +216,8 @@ public:
       }
     }
 
-    if (!m_ec.no_waitset()) {
-      DDS_Duration_t wait_timeout = {15, 0};
-      m_waitset.wait(m_condition_seq, wait_timeout);
-    }
+    DDS_Duration_t wait_timeout = {15, 0};
+    m_waitset.wait(m_condition_seq, wait_timeout);
 
     auto ret = m_typed_datareader->take(m_data_seq, m_sample_info_seq, DDS_LENGTH_UNLIMITED,
         DDS_ANY_SAMPLE_STATE, DDS_ANY_VIEW_STATE,
@@ -263,8 +264,8 @@ private:
   void register_topic()
   {
     if (m_topic == nullptr) {
-      auto retcode = m_participant->register_type(
-        Topic::topic_name().c_str(), Topic::ConnextDDSMicroTypePlugin());
+      auto retcode = Topic::ConnextDDSMicroType::TypeSupport::register_type(m_participant,
+          Topic::topic_name().c_str());
       if (retcode != DDS_RETCODE_OK) {
         throw std::runtime_error("failed to register type");
       }
@@ -280,6 +281,45 @@ private:
       m_topic->enable();
     }
   }
+
+  /**
+  * \brief Initializes the frame_id field in data header.
+  * This is the overloaded method which is called if data header has frame_id
+  * \param data The data to publish.
+  */
+  template<typename T>
+  static auto init_data(T & data)->decltype (data.header_.frame_id_, void ()) {
+    data.header_.frame_id_ = DDS_String_dup("frame_id");
+    init_fields(data);
+  }
+
+  /// Do nothing if frame_id not present
+  static void init_data(...) {}
+
+  /**
+  * \brief Returns the size of array passed to it.
+  * \param arr The array to compute the size of.
+  */
+  template<class T, size_t N>
+  static constexpr size_t size(T (&)[N]) {return N;}
+
+  /**
+  * \brief Initializes the PointField array name field in data header.
+  * This is the overloaded helper method which is called from init_data() if data has
+  * PointField array in the payload
+  * \param data The data to publish.
+  */
+  template<typename T>
+  static auto init_fields(T & data)->decltype (data.fields_, void ()) {
+    auto fields_size = size(data.fields_);
+    for (uint8_t i = 0; i < fields_size; i++) {
+      data.fields_[i].name_ = DDS_String_dup("name");
+    }
+  }
+
+  /// Do nothing if PointField not present
+  static void init_fields(...) {}
+
 
   DDSDomainParticipant * m_participant;
 

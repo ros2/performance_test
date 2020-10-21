@@ -161,9 +161,7 @@ public:
       }
     }
 
-    if (!m_ec.no_waitset()) {
-      dds_waitset_wait(m_waitset, nullptr, 0, DDS_SECS(15));
-    }
+    dds_waitset_wait(m_waitset, nullptr, 0, DDS_SECS(15));
 
     void * untyped = nullptr;
     dds_sample_info_t si;
@@ -199,8 +197,7 @@ public:
   }
 
 private:
-  /// Registers a topic to the participant. It makes sure that each topic is only registered
-  /// once if resource manager is using a single participant.
+  /// Registers a topic to the participant. It makes sure that each topic is only registered once.
   void register_topic()
   {
     const bool is_single_participant = ResourceManager::get().is_using_single_participant();

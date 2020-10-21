@@ -29,13 +29,15 @@ function(set_compile_options target)
                 -pedantic
                 -Wcast-align
                 -Wunused
-                -Woverloaded-virtual
                 -Wconversion
                 -Wsign-conversion
                 -Wdouble-promotion
-                -Wno-old-style-cast
                 -Wno-unknown-pragmas
                 -Wno-deprecated-declarations
+              $<$<COMPILE_LANGUAGE:CXX>:
+                    -Woverloaded-virtual
+                    -Wno-old-style-cast
+                >
                 $<$<CXX_COMPILER_ID:GNU>:
                     -Wlogical-op
                     #-Wuseless-cast
@@ -49,10 +51,5 @@ function(set_compile_options target)
                     >
                 >
                 -fvisibility=hidden)
-        if(CMAKE_BUILD_TYPE EQUAL "Debug")
-            set_target_properties(${target} PROPERTIES COMPILE_FLAGS "-Og")
-        else()
-            set_target_properties(${target} PROPERTIES COMPILE_FLAGS "-O3 -ftree-vectorize")
-        endif()
     endif()
 endfunction()

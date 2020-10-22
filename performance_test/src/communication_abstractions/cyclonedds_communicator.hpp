@@ -161,9 +161,7 @@ public:
       }
     }
 
-    if (!m_ec.no_waitset()) {
-      dds_waitset_wait(m_waitset, nullptr, 0, DDS_SECS(15));
-    }
+    dds_waitset_wait(m_waitset, nullptr, 0, DDS_SECS(15));
 
     void * untyped = nullptr;
     dds_sample_info_t si;
@@ -199,14 +197,14 @@ public:
   }
 
 private:
-  /// Registers a topic to the participant. It makes sure that each topic is only registered
-  /// once if resource manager is using a single participant.
+  /// Registers a topic to the participant. It makes sure that each topic is only registered once.
   void register_topic()
   {
     const bool is_single_participant = ResourceManager::get().is_using_single_participant();
     if (m_single_participant_topic == 0 || !is_single_participant) {
-      m_topic = dds_create_topic(m_participant, Topic::CycloneDDSDesc(),
-          Topic::topic_name().c_str(), nullptr, nullptr);
+      m_topic = dds_create_topic(
+        m_participant, Topic::CycloneDDSDesc(),
+        Topic::topic_name().c_str(), nullptr, nullptr);
       m_single_participant_topic = m_topic;
       if (m_topic < 0) {
         throw std::runtime_error("failed to create topic");

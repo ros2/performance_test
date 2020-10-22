@@ -56,12 +56,9 @@ std::ostream & operator<<(std::ostream & stream, const ExperimentConfiguration &
            "\nTopic name: " << e.topic_name() <<
            "\nMaximum runtime (sec): " << e.max_runtime() <<
            "\nNumber of publishers: " << e.number_of_publishers() <<
-           "\nNumber of subscribers:" << e.number_of_subscribers() <<
+           "\nNumber of subscribers: " << e.number_of_subscribers() <<
            "\nMemory check enabled: " << e.check_memory() <<
-           "\nUse ros SHM: " << e.use_ros_shm() <<
            "\nUse single participant: " << e.use_single_participant() <<
-           "\nNot using waitset: " << e.no_waitset() <<
-           "\nNot using Connext DDS Micro INTRA: " << e.no_micro_intra() <<
            "\nWith security: " << e.is_with_security() <<
            "\nRoundtrip Mode: " << e.roundtrip_mode() <<
            "\nIgnore seconds from beginning: " << e.rows_to_ignore();
@@ -75,52 +72,67 @@ void ExperimentConfiguration::setup(int argc, char ** argv)
   namespace po = ::boost::program_options;
 
   po::options_description desc("Allowed options");
-  desc.add_options()("help,h", "Print usage message.")("logfile,l", po::value<std::string>(),
-    "Optionally specify a logfile.")("rate,r", po::value<uint32_t>()->default_value(1000),
+  desc.add_options()("help,h", "Print usage message.")(
+    "logfile,l", po::value<std::string>(),
+    "Optionally specify a logfile.")(
+    "rate,r", po::value<uint32_t>()->default_value(1000),
     "The rate data should be published. Defaults to 1000 Hz. 0 means publish as fast as possible.")(
     "communication,c", po::value<std::string>()->required(),
     "Communication plugin to use (ROS2, FastRTPS, ConnextDDSMicro, CycloneDDS, OpenDDS, "
     "ROS2PollingSubscription)")(
     "topic,t",
     po::value<std::string>()->required(),
-    "Topic to use. Use --topic_list to get a list.")("topic_list",
-    "Prints list of available topics and exits.")("dds_domain_id",
-    po::value<uint32_t>()->default_value(0), "Sets the DDS domain id.")("reliable",
-    "Enable reliable QOS. Default is best effort.")("transient",
-    "Enable transient QOS. Default is volatile.")("keep_last",
-    "Enable keep last QOS. Default is keep all.")("history_depth",
+    "Topic to use. Use --topic_list to get a list.")(
+    "topic_list",
+    "Prints list of available topics and exits.")(
+    "dds_domain_id",
+    po::value<uint32_t>()->default_value(0), "Sets the DDS domain id.")(
+    "reliable",
+    "Enable reliable QOS. Default is best effort.")(
+    "transient",
+    "Enable transient QOS. Default is volatile.")(
+    "keep_last",
+    "Enable keep last QOS. Default is keep all.")(
+    "history_depth",
     po::value<uint32_t>()->default_value(1000),
-    "Set history depth QOS. Defaults to 1000.")("disable_async",
-    "Disables async. pub/sub.")("max_runtime",
+    "Set history depth QOS. Defaults to 1000.")(
+    "disable_async",
+    "Disables async. pub/sub.")(
+    "max_runtime",
     po::value<uint64_t>()->default_value(0),
     "Maximum number of seconds to run before exiting. Default (0) is to run forever.")(
     "num_pub_threads,p", po::value<uint32_t>()->default_value(1),
-    "Maximum number of publisher threads.")("num_sub_threads,s",
+    "Maximum number of publisher threads.")(
+    "num_sub_threads,s",
     po::value<uint32_t>()->default_value(1),
-    "Maximum number of subscriber threads.")("use_ros_shm",
-    "Use Ros SHM support.")("check_memory",
+    "Maximum number of subscriber threads.")(
+    "check_memory",
     "Prints backtrace of all memory operations performed by the middleware. "
-    "This will slow down the application!")("use_rt_prio", po::value<int32_t>()->default_value(0),
+    "This will slow down the application!")(
+    "use_rt_prio", po::value<int32_t>()->default_value(0),
     "Set RT priority. "
     "Only certain platforms (i.e. Drive PX) have the right configuration to support this.")(
     "use_rt_cpus", po::value<uint32_t>()->default_value(0),
     "Set RT cpu affinity mask. "
     "Only certain platforms (i.e. Drive PX) have the right configuration to support this.")(
-    "use_drive_px_rt", "alias for --use_rt_prio 5 --use_rt_cpus 62")(
     "use_single_participant",
-    "Uses only one participant per process. By default every thread has its own.")("no_waitset",
-    "Disables the wait set for new data. The subscriber takes as fast as possible.")(
-    "no_micro_intra", "Disables the Connext DDS Micro INTRA transport.")(
-    "with_security", "Make nodes with deterministic names for use with security")("roundtrip_mode",
+    "Uses only one participant per process. By default every thread has its own.")(
+    "with_security", "Make nodes with deterministic names for use with security")(
+    "roundtrip_mode",
     po::value<std::string>()->default_value("None"),
-    "Selects the round trip mode (None, Main, Relay).")("ignore",
+    "Selects the round trip mode (None, Main, Relay).")(
+    "ignore",
     po::value<uint32_t>()->default_value(0),
-    "Ignores first n seconds of the experiment.")("disable_logging",
-    "Disables experiment logging to stdout.")("expected_num_pubs",
+    "Ignores first n seconds of the experiment.")(
+    "disable_logging",
+    "Disables experiment logging to stdout.")(
+    "expected_num_pubs",
     po::value<uint32_t>()->default_value(0), "Expected number of publishers for "
-    "wait_for_matched")("expected_num_subs",
+    "wait_for_matched")(
+    "expected_num_subs",
     po::value<uint32_t>()->default_value(0), "Expected number of subscribers for "
-    "wait_for_matched")("wait_for_matched_timeout",
+    "wait_for_matched")(
+    "wait_for_matched_timeout",
     po::value<uint32_t>()->default_value(30),
     "Maximum time[s] to wait for matching publishers/subscribers. Defaults to 30s")
 #ifdef PERFORMANCE_TEST_ODB_FOR_SQL_ENABLED
@@ -128,17 +140,20 @@ void ExperimentConfiguration::setup(int argc, char ** argv)
   "Name of the SQL database.")
 #if defined DATABASE_MYSQL || defined DATABASE_PGSQL
   ("db_user", po::value<std::string>(),
-  "User name to login to the SQL database.")("db_password",
+  "User name to login to the SQL database.")(
+    "db_password",
     po::value<std::string>(),
-    "Password to login to the SQL database.")("db_host",
-    po::value<std::string>(), "IP address of SQL server.")("db_port",
+    "Password to login to the SQL database.")(
+    "db_host",
+    po::value<std::string>(), "IP address of SQL server.")(
+    "db_port",
     po::value<unsigned int>(), "Port for SQL protocol.")
 #endif
 #endif
   ;
   po::variables_map vm;
 #if defined(USE_LEGACY_QOS_API)
-  po::store(parse_command_line(argc, argv, desc), vm);
+  po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
 #else
   // ROS eloquent adds by default --ros-args to ros2 launch and no value for that argument
   // is valid, so we allow unregistered options so boost doesn't complain about it.
@@ -275,24 +290,13 @@ void ExperimentConfiguration::setup(int argc, char ** argv)
       throw std::invalid_argument("More than one publisher is not supported at the moment");
     }
 
-    m_use_ros_shm = false;
-    if (vm.count("use_ros_shm")) {
-      if (m_com_mean != CommunicationMean::ROS2) {
-        throw std::invalid_argument("Must use ROS2 for this option for ROS2 SHM!");
-      }
-      m_use_ros_shm = true;
-    }
     int32_t prio = vm["use_rt_prio"].as<int32_t>();
     uint32_t cpus = vm["use_rt_cpus"].as<uint32_t>();
-    if (vm.count("use_drive_px_rt")) {
-      // Set Drive-px CPU mask "62" cpu 0-5 and real time priority of 5
-      prio = 5;
-      cpus = 62;
-    }
+
     if (prio != 0 || cpus != 0) {
 #if PERFORMANCE_TEST_RT_ENABLED
       pre_proc_rt_init(cpus, prio);
-      m_is_drivepx_rt = true;
+      m_is_rt_init_required = true;
 #else
       throw std::invalid_argument("Built with RT optimizations disabled");
 #endif
@@ -305,26 +309,7 @@ void ExperimentConfiguration::setup(int argc, char ** argv)
         m_use_single_participant = true;
       }
     }
-    m_no_waitset = false;
-    if (vm.count("no_waitset")) {
-      if (m_com_mean == CommunicationMean::ROS2) {
-        throw std::invalid_argument("ROS2 does not support disabling the waitset!");
-      } else {
-        m_no_waitset = true;
-      }
-    }
 
-    m_no_micro_intra = false;
-#ifdef PERFORMANCE_TEST_CONNEXTDDSMICRO_ENABLED
-    if (vm.count("no_micro_intra")) {
-      if (m_com_mean != CommunicationMean::CONNEXTDDSMICRO) {
-        throw std::invalid_argument(
-                "Only Connext DDS Micro supports INTRA Transport and can therefore disable it.");
-      } else {
-        m_no_micro_intra = true;
-      }
-    }
-#endif
     m_with_security = false;
     if (vm.count("with_security")) {
       if (m_com_mean != CommunicationMean::ROS2) {
@@ -493,34 +478,16 @@ bool ExperimentConfiguration::check_memory() const
   return m_check_memory;
 }
 
-bool ExperimentConfiguration::use_ros_shm() const
-{
-  check_setup();
-  return m_use_ros_shm;
-}
-
 bool ExperimentConfiguration::use_single_participant() const
 {
   check_setup();
   return m_use_single_participant;
 }
 
-bool ExperimentConfiguration::no_waitset() const
+bool ExperimentConfiguration::is_rt_init_required() const
 {
   check_setup();
-  return m_no_waitset;
-}
-
-bool ExperimentConfiguration::no_micro_intra() const
-{
-  check_setup();
-  return m_no_micro_intra;
-}
-
-bool ExperimentConfiguration::is_drivepx_rt() const
-{
-  check_setup();
-  return m_is_drivepx_rt;
+  return m_is_rt_init_required;
 }
 
 bool ExperimentConfiguration::is_with_security() const

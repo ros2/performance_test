@@ -23,6 +23,11 @@
 #include <memory>
 #include <thread>
 
+#if defined(QNX)
+#include <sys/neutrino.h>
+#include <inttypes.h>
+#endif
+
 #include "../utilities/spin_lock.hpp"
 
 namespace performance_test
@@ -146,6 +151,10 @@ private:
       if (m_run_type == RunType::PUBLISHER &&
         m_ec.roundtrip_mode() != ExperimentConfiguration::RoundTripMode::RELAY)
       {
+#if defined(QNX)
+        std::uint64_t clk_cyc = ClockCycles();
+        data->time = static_cast<std::int64_t>(clk_cyc);
+#endif
         std::chrono::nanoseconds epoc_time =
           std::chrono::steady_clock::now().time_since_epoch();
         m_com.publish(*data, epoc_time);

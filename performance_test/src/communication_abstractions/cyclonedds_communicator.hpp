@@ -97,8 +97,11 @@ public:
   : Communicator(lock),
     m_participant(ResourceManager::get().cyclonedds_participant()),
     m_datawriter(0),
-    m_datareader(0)
+    m_datareader(0),
+    m_topic_pub(0),
+    m_topic_sub(0)
   {
+    m_prev_timestamp = 0;
     register_topic();
   }
 
@@ -116,7 +119,7 @@ public:
       dds_qos_t * dw_qos = dds_create_qos();
       CycloneDDSQOSAdapter qos_adapter(m_ec.qos());
       qos_adapter.apply(dw_qos);
-      m_datawriter = dds_create_writer(m_participant, m_topic, dw_qos, nullptr);
+      m_datawriter = dds_create_writer(m_participant, m_topic_pub, dw_qos, nullptr);
       dds_delete_qos(dw_qos);
       if (m_datawriter < 0) {
         throw std::runtime_error("failed to create datawriter");
@@ -149,7 +152,7 @@ public:
       dds_qos_t * dw_qos = dds_create_qos();
       CycloneDDSQOSAdapter qos_adapter(m_ec.qos());
       qos_adapter.apply(dw_qos);
-      m_datareader = dds_create_reader(m_participant, m_topic, dw_qos, nullptr);
+      m_datareader = dds_create_reader(m_participant, m_topic_sub, dw_qos, nullptr);
       dds_delete_qos(dw_qos);
       if (m_datareader < 0) {
         throw std::runtime_error("failed to create datareader");
@@ -176,16 +179,20 @@ public:
                   "Time diff: " + std::to_string(data->time_ - m_prev_timestamp) +
                   " Data Time: " + std::to_string(data->time_));
         }
-        m_prev_timestamp = data->time_;
-        update_lost_samples_counter(data->id_);
-        add_latency_to_statistics(data->time_);
-        increment_received();
+
+        if (m_ec.roundtrip_mode() == ExperimentConfiguration::RoundTripMode::RELAY) {
+          unlock();
+          DataType pubdata = *data;
+          publish(pubdata, std::chrono::nanoseconds(pubdata.time_));
+          lock();
+        } else {
+          m_prev_timestamp = data->time_;
+          update_lost_samples_counter(data->id_);
+          add_latency_to_statistics(data->time_);
+          increment_received();
+        }
       }
       unlock();
-
-      if (m_ec.roundtrip_mode() == ExperimentConfiguration::RoundTripMode::RELAY) {
-        throw std::runtime_error("Round trip mode is not implemented for Cyclone DDS!");
-      }
       dds_return_loan(m_datareader, &untyped, n);
     }
   }
@@ -200,12 +207,35 @@ private:
   /// Registers a topic to the participant. It makes sure that each topic is only registered once.
   void register_topic()
   {
-    if (m_topic == 0) {
-      m_topic = dds_create_topic(
-        m_participant, Topic::CycloneDDSDesc(),
-        Topic::topic_name().c_str(), nullptr, nullptr);
-      if (m_topic < 0) {
+    if(m_topic_sub > 0 || m_topic_pub > 0) {
+      return;
+    }
+
+    std::string pub_topic_postfix = m_ec.pub_topic_postfix();
+    std::string sub_topic_postfix = m_ec.sub_topic_postfix();
+
+    if(pub_topic_postfix == sub_topic_postfix) {
+      m_topic_pub = dds_create_topic(
+          m_participant, Topic::CycloneDDSDesc(),
+          Topic::topic_name().c_str(), nullptr, nullptr);
+      if (m_topic_pub < 0) {
         throw std::runtime_error("failed to create topic");
+      }
+
+      m_topic_sub = m_topic_pub;
+    } else {
+      m_topic_pub = dds_create_topic(
+          m_participant, Topic::CycloneDDSDesc(),
+          (Topic::topic_name() + pub_topic_postfix).c_str(), nullptr, nullptr);
+      if (m_topic_pub < 0) {
+        throw std::runtime_error("failed to create topic_pub");
+      }
+
+      m_topic_sub = dds_create_topic(
+          m_participant, Topic::CycloneDDSDesc(),
+          (Topic::topic_name() + sub_topic_postfix).c_str(), nullptr, nullptr);
+      if (m_topic_sub < 0) {
+        throw std::runtime_error("failed to create topic_sub");
       }
     }
   }
@@ -218,11 +248,9 @@ private:
   dds_entity_t m_waitset;
   dds_entity_t m_condition;
 
-  static dds_entity_t m_topic;
+  dds_entity_t m_topic_pub;
+  dds_entity_t m_topic_sub;
 };
-
-template<class Topic>
-dds_entity_t CycloneDDSCommunicator<Topic>::m_topic = 0;
 
 }  // namespace performance_test
 

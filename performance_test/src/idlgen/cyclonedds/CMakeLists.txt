@@ -89,7 +89,7 @@ foreach(idl ${SUPP_IDL_SOURCE_C} ${IDL_SOURCE_C})
   list(APPEND IDL_GEN_C_LIST ${IDL_GEN_C})
 endforeach()
 
-add_library(cyclonedds_idl ${IDL_GEN_H_LIST} ${IDL_GEN_C_LIST})
+add_library(cyclonedds_idl STATIC ${IDL_GEN_H_LIST} ${IDL_GEN_C_LIST})
 
 #target_include_directories(cyclonedds_idl PRIVATE CycloneDDS::ddsc)
 get_target_property(cdds_include_dir CycloneDDS::ddsc INTERFACE_INCLUDE_DIRECTORIES)

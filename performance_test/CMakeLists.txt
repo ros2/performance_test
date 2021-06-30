@@ -64,9 +64,7 @@ endif()
 ament_export_include_directories(include)
 ament_export_dependencies(rosidl_default_runtime)
 
-# This is a workaround for broken include paths on some systems.
-include_directories(${FastRTPS_INCLUDE_DIR} ${FastRTPS_INCLUDE_DIR}/fastrtps/include ${fastcdr_INCLUDE_DIR})
-include_directories(include ${osrf_testing_tools_cpp_INCLUDE_DIR})
+include_directories(include)
 
 # FastRTPS
 option(PERFORMANCE_TEST_FASTRTPS_ENABLED "Enable FastRTPS" OFF)
@@ -316,7 +314,7 @@ endif()
 
 if(PERFORMANCE_TEST_FASTRTPS_ENABLED)
   target_link_libraries(${EXE_NAME}
-      ${FastRTPS_LIBRARIES}
+      fastrtps
       fast_rtps_idl
       fastcdr)
 endif()

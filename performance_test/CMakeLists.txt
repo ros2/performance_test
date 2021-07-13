@@ -399,6 +399,10 @@ if(TARGET rti_connextdds_idl)
   )
 endif()
 
+target_include_directories(${EXE_NAME}
+  PRIVATE
+    ${Boost_INCLUDE_DIRS}
+)
 target_link_libraries(${EXE_NAME}
     ${Boost_LIBRARIES}
     ${OPTIONAL_LIBRARIES}

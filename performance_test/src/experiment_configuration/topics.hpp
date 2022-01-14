@@ -35,7 +35,6 @@
 #include <performance_test/msg/struct16.hpp>
 #include <performance_test/msg/struct256.hpp>
 #include <performance_test/msg/struct4k.hpp>
-#include <performance_test/msg/struct32k.hpp>
 
 #include <performance_test/msg/point_cloud512k.hpp>
 #include <performance_test/msg/point_cloud1m.hpp>
@@ -64,7 +63,6 @@
   #include <fast_rtps/Struct16_PubSubTypes.h>
   #include <fast_rtps/Struct256_PubSubTypes.h>
   #include <fast_rtps/Struct4k_PubSubTypes.h>
-  #include <fast_rtps/Struct32k_PubSubTypes.h>
 
   #include <fast_rtps/PointCloud512k_PubSubTypes.h>
   #include <fast_rtps/PointCloud1m_PubSubTypes.h>
@@ -94,7 +92,6 @@
   #include <performance_test/msg/dds_connext_micro_typefiles/Struct16_Support.h>
   #include <performance_test/msg/dds_connext_micro_typefiles/Struct256_Support.h>
   #include <performance_test/msg/dds_connext_micro_typefiles/Struct4k_Support.h>
-  #include <performance_test/msg/dds_connext_micro_typefiles/Struct32k_Support.h>
 
   #include <performance_test/msg/dds_connext_micro_typefiles/PointCloud512k_Support.h>
   #include <performance_test/msg/dds_connext_micro_typefiles/PointCloud1m_Support.h>
@@ -124,7 +121,6 @@
   #include <cyclonedds/Struct16_.h>
   #include <cyclonedds/Struct256_.h>
   #include <cyclonedds/Struct4k_.h>
-  #include <cyclonedds/Struct32k_.h>
 
   #include <cyclonedds/PointCloud512k_.h>
   #include <cyclonedds/PointCloud1m_.h>
@@ -154,7 +150,6 @@
   #include <opendds/Struct16_TypeSupportImpl.h>
   #include <opendds/Struct256_TypeSupportImpl.h>
   #include <opendds/Struct4k_TypeSupportImpl.h>
-  #include <opendds/Struct32k_TypeSupportImpl.h>
   #include <opendds/PointCloud512k_TypeSupportImpl.h>
   #include <opendds/PointCloud1m_TypeSupportImpl.h>
   #include <opendds/PointCloud2m_TypeSupportImpl.h>
@@ -647,45 +642,6 @@ public:
   }
 };
 
-class Struct32k
-{
-public:
-  using RosType = performance_test::msg::Struct32k;
-#ifdef PERFORMANCE_TEST_FASTRTPS_ENABLED
-  using EprosimaTopicType = performance_test_msgs::msg::dds_::Struct32k_PubSubType;
-  using EprosimaType = typename EprosimaTopicType::type;
-#endif
-
-#ifdef PERFORMANCE_TEST_CONNEXTDDSMICRO_ENABLED
-  using ConnextDDSMicroType = performance_test_msg_dds__Struct32k_;
-#endif
-
-#ifdef PERFORMANCE_TEST_CYCLONEDDS_ENABLED
-  using CycloneDDSType = performance_test_msgs_msg_dds__Struct32k_;
-  static const dds_topic_descriptor_t * CycloneDDSDesc()
-  {
-    return &performance_test_msgs_msg_dds__Struct32k__desc;
-  }
-#endif
-
-#ifdef PERFORMANCE_TEST_OPENDDS_ENABLED
-  using OpenDDSTopicType = performance_test_msgs::msg::dds_::Struct32k_;
-  using OpenDDSDataWriterType = performance_test_msgs::msg::dds_::Struct32k_DataWriter;
-  using OpenDDSDataReaderType = performance_test_msgs::msg::dds_::Struct32k_DataReader;
-  using OpenDDSDataTypeSeq = performance_test_msgs::msg::dds_::Struct32k_Seq;
-
-  static DDS::TypeSupport_ptr get_type_support()
-  {
-    return new performance_test_msgs::msg::dds_::Struct32k_TypeSupportImpl();
-  }
-#endif
-
-  static std::string topic_name()
-  {
-    return std::string("Struct32k");
-  }
-};
-
 class PointCloud512k
 {
 public:
@@ -1040,7 +996,7 @@ public:
 
 using TopicTypeList = std::tuple<Array1k, Array4k, Array16k, Array32k, Array60k, Array1m,
     Array2m, Array4m, Array8m,
-    Struct16, Struct256, Struct4k, Struct32k,
+    Struct16, Struct256, Struct4k,
     PointCloud512k, PointCloud1m, PointCloud2m, PointCloud4m, PointCloud8m,
     Range, NavSatFix, RadarDetection, RadarTrack>;
 

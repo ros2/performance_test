@@ -36,7 +36,6 @@ set(IDL_SOURCE_C
   ../Struct16_.idl
   ../Struct256_.idl
   ../Struct4k_.idl
-  ../Struct32k_.idl
   ../PointField_.idl
   ../Header_.idl
   ../Time_.idl

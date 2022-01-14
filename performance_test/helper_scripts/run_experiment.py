@@ -43,7 +43,7 @@ class Instance:
         topics = [
             'Array1k', 'Array4k', 'Array16k', 'Array32k', 'Array60k',
             'Array1m', 'Array2m', 'Struct16', 'Struct256', 'Struct4k',
-            'Struct32k', 'PointCloud512k', 'PointCloud1m', 'PointCloud2m',
+            'PointCloud512k', 'PointCloud1m', 'PointCloud2m',
             'PointCloud4m', 'Range', 'NavSatFix', 'RadarDetection',
             'RadarTrack'
         ]

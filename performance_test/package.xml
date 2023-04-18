@@ -30,14 +30,9 @@
   <exec_depend>rmw_implementation</exec_depend>
   <exec_depend>rosidl_default_runtime</exec_depend>
 
-  <test_depend>ament_cmake_nose</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
-  <test_depend>launch</test_depend>
-  <test_depend>launch_testing</test_depend>
-  <test_depend>rmw_implementation_cmake</test_depend>
-  <test_depend>test_osrf_testing_tools_cpp</test_depend>
 
   <member_of_group>rosidl_interface_packages</member_of_group>
 

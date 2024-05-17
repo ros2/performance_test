@@ -210,9 +210,9 @@ private:
     m_memory_tools_on = true;
     #endif
   }
+  SpinLock m_lock;
   TCommunicator m_com;
   std::atomic<bool> m_run;
-  SpinLock m_lock;
 
   uint64_t m_sum_received_samples;
   uint64_t m_sum_lost_samples;

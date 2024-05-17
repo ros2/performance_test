@@ -15,6 +15,7 @@
 #ifndef EXPERIMENT_CONFIGURATION__QOS_ABSTRACTION_HPP_
 #define EXPERIMENT_CONFIGURATION__QOS_ABSTRACTION_HPP_
 
+#include <cstdint>
 #include <ostream>
 
 namespace performance_test

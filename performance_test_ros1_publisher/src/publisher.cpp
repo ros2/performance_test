@@ -1,3 +1,5 @@
+#include <memory>
+
 #include "ros/ros.h"
 
 #include "performance_test_ros1_publisher/msg_types.hpp"
@@ -6,7 +8,7 @@
 #include <boost/mpl/for_each.hpp>
 #include <boost/program_options.hpp>
 
-#include <memory>
+
 
 std::shared_ptr<MsgBase> msg_publisher_factory(ros::NodeHandle& nh, std::string topic_name)
 {

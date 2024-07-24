@@ -15,11 +15,10 @@
 #ifndef COMMUNICATION_ABSTRACTIONS__ROS2_COMMUNICATOR_HPP_
 #define COMMUNICATION_ABSTRACTIONS__ROS2_COMMUNICATOR_HPP_
 
-
-#include <rclcpp/rclcpp.hpp>
-
 #include <memory>
 #include <atomic>
+
+#include <rclcpp/rclcpp.hpp>
 
 #include "../experiment_configuration/topics.hpp"
 #include "../experiment_configuration/qos_abstraction.hpp"

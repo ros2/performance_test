@@ -1,10 +1,10 @@
 #ifndef PERFORMANCE_TEST_ROS1_PUBLISHER_MSG_TYPES_HPP_INCLUDED
 #define PERFORMANCE_TEST_ROS1_PUBLISHER_MSG_TYPES_HPP_INCLUDED
 
-#include <boost/mpl/list.hpp>
-
 #include <chrono>
 #include <memory>
+
+#include <boost/mpl/list.hpp>
 
 #include "performance_test_ros1_msgs/Array16k.h"
 #include "performance_test_ros1_msgs/Array1k.h"

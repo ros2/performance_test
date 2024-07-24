@@ -15,11 +15,12 @@
 #ifndef EXPERIMENT_CONFIGURATION__EXTERNAL_INFO_STORAGE_HPP_
 #define EXPERIMENT_CONFIGURATION__EXTERNAL_INFO_STORAGE_HPP_
 
+#include <iostream>
+#include <string>
+
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/exceptions.hpp>
-#include <iostream>
-#include <string>
 
 #ifdef PERFORMANCE_TEST_ODB_FOR_SQL_ENABLED
   #include <odb/core.hxx>

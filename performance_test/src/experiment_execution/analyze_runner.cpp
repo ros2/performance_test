@@ -11,14 +11,17 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#include <boost/algorithm/string.hpp>
 #include <algorithm>
 #include <cstdlib>
 #include <cstddef>
 #include <iostream>
+#include <exception>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
+
+#include <boost/algorithm/string.hpp>
 
 #include "analyze_runner.hpp"
 
@@ -26,8 +29,6 @@
 
 #ifdef PERFORMANCE_TEST_ODB_FOR_SQL_ENABLED
   #include <odb/database.hxx>
-  #include <exception>
-  #include <memory>
   #ifdef DATABASE_SQLITE
     #include <odb/sqlite/database.hxx>
   #endif

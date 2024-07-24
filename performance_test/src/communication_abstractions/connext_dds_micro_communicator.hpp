@@ -292,7 +292,8 @@ private:
   * \param data The data to publish.
   */
   template<typename T>
-  static auto init_data(T & data)->decltype (data.header_.frame_id_, void ()) {
+  static auto init_data(T & data)->decltype (data.header_.frame_id_, void ())
+  {
     data.header_.frame_id_ = DDS_String_dup("frame_id");
     init_fields(data);
   }
@@ -314,7 +315,8 @@ private:
   * \param data The data to publish.
   */
   template<typename T>
-  static auto init_fields(T & data)->decltype (data.fields_, void ()) {
+  static auto init_fields(T & data)->decltype (data.fields_, void ())
+  {
     auto fields_size = size(data.fields_);
     for (uint8_t i = 0; i < fields_size; i++) {
       data.fields_[i].name_ = DDS_String_dup("name");

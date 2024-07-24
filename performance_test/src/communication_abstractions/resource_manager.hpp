@@ -15,6 +15,10 @@
 #ifndef COMMUNICATION_ABSTRACTIONS__RESOURCE_MANAGER_HPP_
 #define COMMUNICATION_ABSTRACTIONS__RESOURCE_MANAGER_HPP_
 
+#include <cstdlib>
+#include <memory>
+#include <mutex>
+
 #ifdef PERFORMANCE_TEST_FASTRTPS_ENABLED
   #include <fastrtps/participant/Participant.h>
   #include <fastrtps/attributes/ParticipantAttributes.h>
@@ -45,9 +49,6 @@
 #endif
 
 #include <rclcpp/rclcpp.hpp>
-#include <cstdlib>
-#include <memory>
-#include <mutex>
 
 #include "../experiment_configuration/experiment_configuration.hpp"
 

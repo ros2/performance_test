@@ -15,13 +15,15 @@
 #ifndef EXPERIMENT_CONFIGURATION__EXPERIMENT_CONFIGURATION_HPP_
 #define EXPERIMENT_CONFIGURATION__EXPERIMENT_CONFIGURATION_HPP_
 
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
-
 #include <string>
 #include <fstream>
 #include <vector>
 #include <memory>
+#include <chrono>
+
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+
 
 #include "qos_abstraction.hpp"
 #include "communication_mean.hpp"
@@ -33,7 +35,6 @@
 #ifdef PERFORMANCE_TEST_ODB_FOR_SQL_ENABLED
   #include <odb/core.hxx>
 #endif
-#include <chrono>
 
 namespace performance_test
 {

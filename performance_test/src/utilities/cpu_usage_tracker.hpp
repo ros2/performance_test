@@ -15,8 +15,10 @@
 #ifndef UTILITIES__CPU_USAGE_TRACKER_HPP_
 #define UTILITIES__CPU_USAGE_TRACKER_HPP_
 
-#include <boost/timer/timer.hpp>
 #include <thread>
+
+#include <boost/timer/timer.hpp>
+
 
 #if defined(QNX)
 #include <sys/neutrino.h>

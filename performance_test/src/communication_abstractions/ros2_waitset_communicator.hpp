@@ -15,12 +15,12 @@
 #ifndef COMMUNICATION_ABSTRACTIONS__ROS2_WAITSET_COMMUNICATOR_HPP_
 #define COMMUNICATION_ABSTRACTIONS__ROS2_WAITSET_COMMUNICATOR_HPP_
 
-#include <rclcpp/rclcpp.hpp>
-
 #include <atomic>
 #include <memory>
 #include <mutex>
 #include <thread>
+
+#include <rclcpp/rclcpp.hpp>
 
 #include "../experiment_configuration/topics.hpp"
 #include "../experiment_configuration/qos_abstraction.hpp"

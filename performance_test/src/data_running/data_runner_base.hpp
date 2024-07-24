@@ -15,8 +15,9 @@
 #ifndef DATA_RUNNING__DATA_RUNNER_BASE_HPP_
 #define DATA_RUNNING__DATA_RUNNER_BASE_HPP_
 
-#include <boost/core/noncopyable.hpp>
 #include <string>
+
+#include <boost/core/noncopyable.hpp>
 
 #ifdef PERFORMANCE_TEST_MEMORYTOOLS_ENABLED
 #include <osrf_testing_tools_cpp/memory_tools/memory_tools.hpp>

@@ -14,13 +14,13 @@
 
 #include "experiment_configuration.hpp"
 
-#include <boost/program_options.hpp>
 #include <rmw/rmw.h>
-
-#include <iostream>
-#include <iomanip>
-#include <exception>
 #include <string>
+#include <exception>
+#include <iomanip>
+#include <iostream>
+
+#include <boost/program_options.hpp>
 
 #include "topics.hpp"
 

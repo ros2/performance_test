@@ -313,7 +313,7 @@ endif()
 
 if(PERFORMANCE_TEST_FASTRTPS_ENABLED)
   target_link_libraries(${EXE_NAME}
-      fastrtps
+      fastdds
       fast_rtps_idl
       fastcdr)
 endif()

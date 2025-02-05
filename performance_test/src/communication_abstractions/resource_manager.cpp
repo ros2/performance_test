@@ -68,7 +68,28 @@ bool ResourceManager::is_using_single_participant() const
 }
 
 #ifdef PERFORMANCE_TEST_FASTRTPS_ENABLED
-eprosima::fastdds::dds::DomainParticipant * ResourceManager::fastrtps_participant() const
+
+ResourceManager::FastDDSParticipant::FastDDSParticipant(
+  uint32_t domain_id,
+  const eprosima::fastdds::dds::DomainParticipantQos& dp_qos)
+{
+  factory = eprosima::fastdds::dds::DomainParticipantFactory::get_shared_instance();
+  participant = factory->create_participant(domain_id, dp_qos);
+  if (nullptr != participant) {
+    publisher = participant->create_publisher(eprosima::fastdds::dds::PUBLISHER_QOS_DEFAULT);
+    subscriber = participant->create_subscriber(eprosima::fastdds::dds::SUBSCRIBER_QOS_DEFAULT);
+  }
+}
+
+ResourceManager::FastDDSParticipant::~FastDDSParticipant()
+{
+  if (nullptr != participant) {
+    participant->delete_contained_entities();
+    factory->delete_participant(participant);
+  }
+}
+
+std::shared_ptr<ResourceManager::FastDDSParticipant> ResourceManager::fastrtps_participant() const
 {
   namespace ef_dds = eprosima::fastdds::dds;
 
@@ -76,7 +97,7 @@ eprosima::fastdds::dds::DomainParticipant * ResourceManager::fastrtps_participan
 
   auto factory = ef_dds::DomainParticipantFactory::get_shared_instance();
 
-  ef_dds::DomainParticipant * result = nullptr;
+  std::shared_ptr<FastDDSParticipant> result;
   ef_dds::DomainParticipantQos qos;
 
   // Get the default participant QoS (allowing it to be configured on XML)
@@ -94,10 +115,10 @@ eprosima::fastdds::dds::DomainParticipant * ResourceManager::fastrtps_participan
   qos.name() = "performance_test_fast_DDS";
 
   if (!m_ec.use_single_participant()) {
-    result = factory->create_participant(m_ec.dds_domain_id(), qos);
+    result = std::make_shared<FastDDSParticipant>(m_ec.dds_domain_id(), qos);
   } else {
     if (!m_fastrtps_participant) {
-      m_fastrtps_participant = factory->create_participant(m_ec.dds_domain_id(), qos);
+      m_fastrtps_participant = std::make_shared<FastDDSParticipant>(m_ec.dds_domain_id(), qos);
     }
     result = m_fastrtps_participant;
   }

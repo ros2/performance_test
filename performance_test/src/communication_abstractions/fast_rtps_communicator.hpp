@@ -15,17 +15,13 @@
 #ifndef COMMUNICATION_ABSTRACTIONS__FAST_RTPS_COMMUNICATOR_HPP_
 #define COMMUNICATION_ABSTRACTIONS__FAST_RTPS_COMMUNICATOR_HPP_
 
-#include <fastcdr/Cdr.h>
-#include <fastcdr/FastBuffer.h>
-#include <fastrtps/attributes/PublisherAttributes.h>
-#include <fastrtps/publisher/PublisherListener.h>
-#include <fastrtps/participant/Participant.h>
-#include <fastrtps/attributes/ParticipantAttributes.h>
-#include <fastrtps/attributes/SubscriberAttributes.h>
-#include <fastrtps/subscriber/Subscriber.h>
-#include <fastrtps/publisher/Publisher.h>
-#include <fastrtps/subscriber/SampleInfo.h>
-#include <fastrtps/Domain.h>
+#include <fastdds/dds/core/policy/QosPolicies.hpp>
+#include <fastdds/dds/publisher/DataWriter.hpp>
+#include <fastdds/dds/publisher/qos/DataWriterQos.hpp>
+#include <fastdds/dds/subscriber/DataReader.hpp>
+#include <fastdds/dds/subscriber/qos/DataReaderQos.hpp>
+#include <fastdds/dds/topic/Topic.hpp>
+#include <fastdds/dds/topic/TypeSupport.hpp>
 
 #include <atomic>
 
@@ -50,34 +46,34 @@ public:
   {}
 
   /// Returns derived FastRTPS reliability setting from the stored abstract QOS setting.
-  inline eprosima::fastrtps::ReliabilityQosPolicyKind reliability() const
+  inline eprosima::fastdds::dds::ReliabilityQosPolicyKind reliability() const
   {
     if (m_qos.reliability == QOSAbstraction::Reliability::BEST_EFFORT) {
-      return eprosima::fastrtps::ReliabilityQosPolicyKind::BEST_EFFORT_RELIABILITY_QOS;
+      return eprosima::fastdds::dds::ReliabilityQosPolicyKind::BEST_EFFORT_RELIABILITY_QOS;
     } else if (m_qos.reliability == QOSAbstraction::Reliability::RELIABLE) {
-      return eprosima::fastrtps::ReliabilityQosPolicyKind::RELIABLE_RELIABILITY_QOS;
+      return eprosima::fastdds::dds::ReliabilityQosPolicyKind::RELIABLE_RELIABILITY_QOS;
     } else {
       throw std::runtime_error("Unsupported QOS!");
     }
   }
   /// Returns derived FastRTPS durability setting from the stored abstract QOS setting.
-  inline eprosima::fastrtps::DurabilityQosPolicyKind durability() const
+  inline eprosima::fastdds::dds::DurabilityQosPolicyKind durability() const
   {
     if (m_qos.durability == QOSAbstraction::Durability::VOLATILE) {
-      return eprosima::fastrtps::DurabilityQosPolicyKind::VOLATILE_DURABILITY_QOS;
+      return eprosima::fastdds::dds::DurabilityQosPolicyKind::VOLATILE_DURABILITY_QOS;
     } else if (m_qos.durability == QOSAbstraction::Durability::TRANSIENT_LOCAL) {
-      return eprosima::fastrtps::DurabilityQosPolicyKind::TRANSIENT_LOCAL_DURABILITY_QOS;
+      return eprosima::fastdds::dds::DurabilityQosPolicyKind::TRANSIENT_LOCAL_DURABILITY_QOS;
     } else {
       throw std::runtime_error("Unsupported QOS!");
     }
   }
   /// Returns derived FastRTPS history policy setting from the stored abstract QOS setting.
-  inline eprosima::fastrtps::HistoryQosPolicyKind history_kind() const
+  inline eprosima::fastdds::dds::HistoryQosPolicyKind history_kind() const
   {
     if (m_qos.history_kind == QOSAbstraction::HistoryKind::KEEP_ALL) {
-      return eprosima::fastrtps::HistoryQosPolicyKind::KEEP_ALL_HISTORY_QOS;
+      return eprosima::fastdds::dds::HistoryQosPolicyKind::KEEP_ALL_HISTORY_QOS;
     } else if (m_qos.history_kind == QOSAbstraction::HistoryKind::KEEP_LAST) {
-      return eprosima::fastrtps::HistoryQosPolicyKind::KEEP_LAST_HISTORY_QOS;
+      return eprosima::fastdds::dds::HistoryQosPolicyKind::KEEP_LAST_HISTORY_QOS;
     } else {
       throw std::runtime_error("Unsupported QOS!");
     }
@@ -100,12 +96,12 @@ public:
     return static_cast<int32_t>(m_qos.history_depth);
   }
   /// Returns the publish mode policy from the stored abstract QOS setting.
-  inline eprosima::fastrtps::PublishModeQosPolicyKind publish_mode() const
+  inline eprosima::fastdds::dds::PublishModeQosPolicyKind publish_mode() const
   {
     if (m_qos.sync_pubsub) {
-      return eprosima::fastrtps::PublishModeQosPolicyKind::SYNCHRONOUS_PUBLISH_MODE;
+      return eprosima::fastdds::dds::PublishModeQosPolicyKind::SYNCHRONOUS_PUBLISH_MODE;
     } else {
-      return eprosima::fastrtps::PublishModeQosPolicyKind::ASYNCHRONOUS_PUBLISH_MODE;
+      return eprosima::fastdds::dds::PublishModeQosPolicyKind::ASYNCHRONOUS_PUBLISH_MODE;
     }
   }
 
@@ -132,20 +128,41 @@ public:
   /// Constructor which takes a reference \param lock to the lock to use.
   explicit FastRTPSCommunicator(SpinLock & lock)
   : Communicator(lock),
-    m_publisher(nullptr),
-    m_subscriber(nullptr),
-    m_topic_type(new TopicType())
+    m_topic(nullptr),
+    m_writer(nullptr),
+    m_reader(nullptr),
+    m_type(new TopicType())
   {
     m_participant = ResourceManager::get().fastrtps_participant();
     if (m_ec.use_single_participant()) {
       if (!s_type_registered) {
-        eprosima::fastrtps::Domain::registerType(m_participant, m_topic_type);
+        m_type.register_type(m_participant->participant);
         s_type_registered = true;
       }
     } else {
-      eprosima::fastrtps::Domain::registerType(m_participant, m_topic_type);
+      m_type.register_type(m_participant->participant);
     }
   }
+
+  void ensure_topic_created()
+  {
+    if (!m_topic) {
+      auto topic_name = Topic::topic_name() + m_ec.pub_topic_postfix();
+      m_topic = m_participant->participant->create_topic(
+        topic_name,
+        m_type.get_type_name(),
+        eprosima::fastdds::dds::TOPIC_QOS_DEFAULT);
+      if (!m_topic) {
+        auto topic_desc = m_participant->participant->lookup_topicdescription(topic_name);
+        m_topic = dynamic_cast<eprosima::fastdds::dds::Topic*>(topic_desc);
+        if (!m_topic)
+        {
+          throw std::runtime_error("Failed to create topic or lookup existing topic");
+        }
+      }
+    }
+  }
+
   /**
    * \brief Publishes the provided data.
    *
@@ -156,30 +173,29 @@ public:
    */
   void publish(DataType & data, const std::chrono::nanoseconds time)
   {
-    if (!m_publisher) {
+    namespace ef_dds = eprosima::fastdds::dds;
+
+    if (!m_writer) {
       const FastRTPSQOSAdapter qos(m_ec.qos());
 
-      eprosima::fastrtps::PublisherAttributes wparam;
-      wparam.topic.topicKind = eprosima::fastrtps::rtps::TopicKind_t::NO_KEY;
-      wparam.topic.topicDataType = m_topic_type->getName();
-      wparam.topic.topicName = Topic::topic_name() + m_ec.pub_topic_postfix();
-      wparam.topic.historyQos.kind = qos.history_kind();
-      wparam.topic.historyQos.depth = qos.history_depth();
-      wparam.topic.resourceLimitsQos.max_samples = qos.resource_limits_samples();
-      wparam.topic.resourceLimitsQos.allocated_samples = qos.resource_limits_samples();
-      wparam.times.heartbeatPeriod.seconds = 2;
-      wparam.times.heartbeatPeriod.fraction(200 * 1000 * 1000);
-      wparam.qos.m_reliability.kind = qos.reliability();
-      wparam.qos.m_durability.kind = qos.durability();
-      wparam.qos.m_publishMode.kind = qos.publish_mode();
-      m_publisher = eprosima::fastrtps::Domain::createPublisher(m_participant, wparam);
+      ensure_topic_created();
+
+      ef_dds::DataWriterQos wqos;
+      wqos.history().kind = qos.history_kind();
+      wqos.history().depth = qos.history_depth();
+      wqos.resource_limits().max_samples = qos.resource_limits_samples();
+      wqos.resource_limits().allocated_samples = qos.resource_limits_samples();
+      wqos.reliability().kind = qos.reliability();
+      wqos.durability().kind = qos.durability();
+      wqos.publish_mode().kind = qos.publish_mode();
+      m_writer = m_participant->publisher->create_datawriter(m_topic, wqos);
     }
     lock();
     data.time_(time.count());
     data.id_(next_sample_id());
     increment_sent();  // We increment before publishing so we don't have to lock twice.
     unlock();
-    m_publisher->write(static_cast<void *>(&data));
+    m_writer->write(static_cast<void *>(&data));
   }
   /**
    * \brief Reads received data from DDS.
@@ -192,26 +208,27 @@ public:
    */
   void update_subscription()
   {
-    if (!m_subscriber) {
+    namespace ef_dds = eprosima::fastdds::dds;
+
+    if (!m_reader) {
       const FastRTPSQOSAdapter qos(m_ec.qos());
 
-      eprosima::fastrtps::SubscriberAttributes rparam;
-      rparam.topic.topicKind = eprosima::fastrtps::rtps::TopicKind_t::NO_KEY;
-      rparam.topic.topicDataType = m_topic_type->getName();
-      rparam.topic.topicName = Topic::topic_name() + m_ec.sub_topic_postfix();
-      rparam.topic.historyQos.kind = qos.history_kind();
-      rparam.topic.historyQos.depth = qos.history_depth();
-      rparam.topic.resourceLimitsQos.max_samples = qos.resource_limits_samples();
-      rparam.topic.resourceLimitsQos.allocated_samples = qos.resource_limits_samples();
-      rparam.qos.m_reliability.kind = qos.reliability();
-      rparam.qos.m_durability.kind = qos.durability();
-      m_subscriber = eprosima::fastrtps::Domain::createSubscriber(m_participant, rparam);
+      ensure_topic_created();
+
+      ef_dds::DataReaderQos rqos;
+      rqos.history().kind = qos.history_kind();
+      rqos.history().depth = qos.history_depth();
+      rqos.resource_limits().max_samples = qos.resource_limits_samples();
+      rqos.resource_limits().allocated_samples = qos.resource_limits_samples();
+      rqos.reliability().kind = qos.reliability();
+      rqos.durability().kind = qos.durability();
+      m_reader = m_participant->subscriber->create_datareader(m_topic, rqos);
     }
 
-    m_subscriber->wait_for_unread_samples({3, 0});
+    m_reader->wait_for_unread_message({3, 0});
     lock();
-    while (m_subscriber->takeNextData(static_cast<void *>(&m_data), &m_info)) {
-      if (m_info.sampleKind == eprosima::fastrtps::rtps::ChangeKind_t::ALIVE) {
+    while (ef_dds::RETCODE_OK == m_reader->take_next_sample(&m_data, &m_info)) {
+      if ((m_info.instance_state == ef_dds::ALIVE_INSTANCE_STATE) && m_info.valid_data) {
         if (m_prev_timestamp >= m_data.time_()) {
           throw std::runtime_error(
                   "Data consistency violated. Received sample with not strictly "
@@ -244,14 +261,15 @@ public:
   }
 
 private:
-  eprosima::fastrtps::Participant * m_participant;
-  eprosima::fastrtps::Publisher * m_publisher;
-  eprosima::fastrtps::Subscriber * m_subscriber;
+  std::shared_ptr<ResourceManager::FastDDSParticipant> m_participant;
+  eprosima::fastdds::dds::Topic * m_topic;
+  eprosima::fastdds::dds::DataWriter * m_writer;
+  eprosima::fastdds::dds::DataReader * m_reader;
 
   static bool s_type_registered;
-  eprosima::fastrtps::SampleInfo_t m_info;
+  eprosima::fastdds::dds::SampleInfo m_info;
 
-  TopicType * m_topic_type;
+  eprosima::fastdds::dds::TypeSupport m_type;
   DataType m_data;
 };
 

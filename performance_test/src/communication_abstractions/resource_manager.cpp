@@ -14,8 +14,10 @@
 
 #include "resource_manager.hpp"
 
-#if defined(PERFORMANCE_TEST_FASTRTPS_ENABLED) && !defined(USE_LEGACY_QOS_API)
-  #include <fastrtps/rtps/attributes/RTPSParticipantAttributes.h>
+#if defined(PERFORMANCE_TEST_FASTRTPS_ENABLED)
+  #include <fastdds/dds/domain/DomainParticipant.hpp>
+  #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
+  #include <fastdds/dds/domain/qos/DomainParticipantQos.hpp>
 #endif
 
 #include <cstdlib>
@@ -66,42 +68,36 @@ bool ResourceManager::is_using_single_participant() const
 }
 
 #ifdef PERFORMANCE_TEST_FASTRTPS_ENABLED
-eprosima::fastrtps::Participant * ResourceManager::fastrtps_participant() const
+eprosima::fastdds::dds::DomainParticipant * ResourceManager::fastrtps_participant() const
 {
+  namespace ef_dds = eprosima::fastdds::dds;
+
   std::lock_guard<std::mutex> lock(m_global_mutex);
 
-  eprosima::fastrtps::Participant * result = nullptr;
-  eprosima::fastrtps::ParticipantAttributes PParam;
+  auto factory = ef_dds::DomainParticipantFactory::get_shared_instance();
 
-  eprosima::fastrtps::xmlparser::XMLProfileManager::loadDefaultXMLFile();
-  eprosima::fastrtps::xmlparser::XMLProfileManager::getDefaultParticipantAttributes(PParam);
-  PParam.rtps.sendSocketBufferSize = 1048576;
-  PParam.rtps.listenSocketBufferSize = 4194304;
-#ifdef USE_LEGACY_QOS_API
-  PParam.rtps.builtin.use_SIMPLE_RTPSParticipantDiscoveryProtocol = true;
-  PParam.rtps.builtin.use_SIMPLE_EndpointDiscoveryProtocol = true;
-  PParam.rtps.builtin.m_simpleEDP.use_PublicationReaderANDSubscriptionWriter = true;
-  PParam.rtps.builtin.m_simpleEDP.use_PublicationWriterANDSubscriptionReader = true;
-  PParam.rtps.builtin.leaseDuration = eprosima::fastrtps::c_TimeInfinite;
-#else
-  eprosima::fastrtps::rtps::DiscoverySettings & disc_config = PParam.rtps.builtin.discovery_config;
-  disc_config.use_SIMPLE_EndpointDiscoveryProtocol = true;
-  disc_config.m_simpleEDP.use_PublicationReaderANDSubscriptionWriter = true;
-  disc_config.m_simpleEDP.use_PublicationWriterANDSubscriptionReader = true;
-  disc_config.leaseDuration = eprosima::fastrtps::c_TimeInfinite;
-#endif
-#if FASTRTPS_VERSION_MAJOR < 2
-  PParam.rtps.builtin.domainId = m_ec.dds_domain_id();
-#else
-  PParam.domainId = m_ec.dds_domain_id();
-#endif
-  PParam.rtps.setName("performance_test_fastRTPS");
+  ef_dds::DomainParticipant * result = nullptr;
+  ef_dds::DomainParticipantQos qos;
+
+  // Get the default participant QoS (allowing it to be configured on XML)
+  factory->load_profiles();
+  factory->get_default_participant_qos(qos);
+
+  // Configure the transport buffer sizes
+  qos.transport().send_socket_buffer_size = 1048576;
+  qos.transport().listen_socket_buffer_size = 4194304;
+
+  // Set infinite lease duration
+  qos.wire_protocol().builtin.discovery_config.leaseDuration = ef_dds::c_TimeInfinite;
+
+  // Set the participant name
+  qos.name() = "performance_test_fast_DDS";
 
   if (!m_ec.use_single_participant()) {
-    result = eprosima::fastrtps::Domain::createParticipant(PParam);
+    result = factory->create_participant(m_ec.dds_domain_id(), qos);
   } else {
     if (!m_fastrtps_participant) {
-      m_fastrtps_participant = eprosima::fastrtps::Domain::createParticipant(PParam);
+      m_fastrtps_participant = factory->create_participant(m_ec.dds_domain_id(), qos);
     }
     result = m_fastrtps_participant;
   }

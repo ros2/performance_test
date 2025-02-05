@@ -20,10 +20,7 @@
 #include <mutex>
 
 #ifdef PERFORMANCE_TEST_FASTRTPS_ENABLED
-  #include <fastrtps/participant/Participant.h>
-  #include <fastrtps/attributes/ParticipantAttributes.h>
-  #include <fastrtps/xmlparser/XMLProfileManager.h>
-  #include <fastrtps/Domain.h>
+  #include <fastdds/dds/domain/DomainParticipant.hpp>
 #endif
 
 #ifdef PERFORMANCE_TEST_CONNEXTDDSMICRO_ENABLED
@@ -80,8 +77,8 @@ public:
   bool is_using_single_participant() const;
 
 #ifdef PERFORMANCE_TEST_FASTRTPS_ENABLED
-  /// Returns FastRTPS participant.
-  eprosima::fastrtps::Participant * fastrtps_participant() const;
+  /// Returns FastDDS participant.
+  eprosima::fastdds::dds::DomainParticipant * fastrtps_participant() const;
 #endif
 
 #ifdef PERFORMANCE_TEST_CONNEXTDDSMICRO_ENABLED
@@ -152,7 +149,7 @@ private:
   mutable std::shared_ptr<rclcpp::Node> m_node;
 
 #ifdef PERFORMANCE_TEST_FASTRTPS_ENABLED
-  mutable eprosima::fastrtps::Participant * m_fastrtps_participant;
+  mutable eprosima::fastdds::dds::DomainParticipant * m_fastrtps_participant;
 #endif
 
 #ifdef PERFORMANCE_TEST_CONNEXTDDSMICRO_ENABLED

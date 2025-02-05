@@ -14,10 +14,10 @@
 
 set(SOURCE_EXTENSION cxx)
 find_package(rmw REQUIRED)
-find_package(FastRTPS REQUIRED)
-include_directories(${FastRTPS_INCLUDE_DIR} ${fastcdr_INCLUDE_DIR})
+find_package(fastdds REQUIRED)
+include_directories(${fastdds_INCLUDE_DIR} ${fastcdr_INCLUDE_DIR})
 # This is a workaround for broken include paths on some systems.
-include_directories(${FastRTPS_INCLUDE_DIR}/fastrtps/include ${fastcdr_INCLUDE_DIR})
+include_directories(${fastdds_INCLUDE_DIR}/fastdds/include ${fastcdr_INCLUDE_DIR})
 set_property(GLOBAL PROPERTY RULE_MESSAGES OFF)
 
 set(IDL_SOURCE_C

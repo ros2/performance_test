@@ -14,10 +14,10 @@
 
 set(SOURCE_EXTENSION cxx)
 find_package(rmw REQUIRED)
-find_package(FastRTPS REQUIRED)
-include_directories(${FastRTPS_INCLUDE_DIR} ${fastcdr_INCLUDE_DIR})
+find_package(fastdds REQUIRED)
+include_directories(${fastdds_INCLUDE_DIR} ${fastcdr_INCLUDE_DIR})
 # This is a workaround for broken include paths on some systems.
-include_directories(${FastRTPS_INCLUDE_DIR}/fastrtps/include ${fastcdr_INCLUDE_DIR})
+include_directories(${fastdds_INCLUDE_DIR}/fastdds/include ${fastcdr_INCLUDE_DIR})
 set_property(GLOBAL PROPERTY RULE_MESSAGES OFF)
 
 set(IDL_SOURCE_C
@@ -65,30 +65,33 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/objs/${RTIME_TARG
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/objs/${RTIME_TARGET_NAME})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/objs/${RTIME_TARGET_NAME})
 
-find_program(FASTRTPS_BIN "fastrtpsgen")
+find_program(FASTRTPS_BIN "fastddsgen")
 if(NOT FASTRTPS_BIN)
-  message(STATUS "Could not find program 'fastrtpsgen' in path. Trying to use bundled version")
-  find_program(FASTRTPS_BIN "fastrtpsgen" PATHS "${PROJECT_SOURCE_DIR}/bin")
+  message(STATUS "Could not find program 'fastddsgen' in path. Trying to use bundled version")
+  find_program(FASTRTPS_BIN "fastddsgen" PATHS "${PROJECT_SOURCE_DIR}/bin")
   if(NOT FASTRTPS_BIN)
-    message(FATAL_ERROR "Could not find program 'fastrtpsgen'")
+    message(FATAL_ERROR "Could not find program 'fastddsgen'")
   endif()
 endif()
 
 foreach(idl ${IDL_SOURCE_C})
   get_filename_component(filename ${idl} NAME)
   string(REGEX REPLACE "\\.idl" "" basename ${filename})
-  set(IDL_GEN_C ${IDL_GEN_ROOT}/${basename}.${SOURCE_EXTENSION}
-      ${IDL_GEN_ROOT}/${basename}PubSubTypes.${SOURCE_EXTENSION})
+  set(IDL_GEN_C ${IDL_GEN_ROOT}/${basename}PubSubTypes.${SOURCE_EXTENSION})
 
-  set(IDL_GEN_H ${IDL_GEN_ROOT}/${basename}.h
-      ${IDL_GEN_ROOT}/${basename}PubSubTypes.h)
+  set(IDL_GEN_H ${IDL_GEN_ROOT}/${basename}.hpp
+      ${IDL_GEN_ROOT}/${basename}CdrAux.hpp
+      ${IDL_GEN_ROOT}/${basename}CdrAux.ipp
+      ${IDL_GEN_ROOT}/${basename}PubSubTypes.hpp)
 
-  set(IDL_GEN_SS ${IDL_GEN_ROOT}/${basename}PubSubTypes.h)
+  set(IDL_GEN_SS ${IDL_GEN_ROOT}/${basename}PubSubTypes.hpp)
 
   add_custom_command(OUTPUT ${IDL_GEN_SS}
       COMMAND ${FASTRTPS_BIN}
       -replace
       -d ${IDL_GEN_ROOT}
+      -de final
+      -no-typeobjectsupport
       ${idl}
       DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../${idl}
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/..
@@ -101,6 +104,6 @@ foreach(idl ${IDL_SOURCE_C})
 endforeach()
 
 add_library(fast_rtps_idl
-    ${IDL_GEN_H_LIST} ${IDL_GEN_C_LIST} ${FastRTPS_LIBRARIES})
+    ${IDL_GEN_H_LIST} ${IDL_GEN_C_LIST} ${fastdds_LIBRARIES})
 set_compile_options(fast_rtps_idl)
 set(FAST_RTPS_IDL_INCLUDE_DIR ${IDL_GEN_ROOT}/.. PARENT_SCOPE)

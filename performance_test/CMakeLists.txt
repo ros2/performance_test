@@ -70,8 +70,7 @@ include_directories(include)
 option(PERFORMANCE_TEST_FASTRTPS_ENABLED "Enable FastRTPS" OFF)
 
 if(PERFORMANCE_TEST_FASTRTPS_ENABLED)
-  find_package(fastrtps_cmake_module QUIET REQUIRED)
-  find_package(FastRTPS QUIET REQUIRED)
+  find_package(fastdds QUIET REQUIRED)
   add_definitions(-DPERFORMANCE_TEST_FASTRTPS_ENABLED)
   add_subdirectory(src/idlgen/fast_rtps)
   include_directories(${FAST_RTPS_IDL_INCLUDE_DIR})
@@ -314,7 +313,7 @@ endif()
 
 if(PERFORMANCE_TEST_FASTRTPS_ENABLED)
   target_link_libraries(${EXE_NAME}
-      fastrtps
+      fastdds
       fast_rtps_idl
       fastcdr)
 endif()

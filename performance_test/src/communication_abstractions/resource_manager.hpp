@@ -20,10 +20,10 @@
 #include <mutex>
 
 #ifdef PERFORMANCE_TEST_FASTRTPS_ENABLED
-  #include <fastrtps/participant/Participant.h>
-  #include <fastrtps/attributes/ParticipantAttributes.h>
-  #include <fastrtps/xmlparser/XMLProfileManager.h>
-  #include <fastrtps/Domain.h>
+  #include <fastdds/dds/domain/DomainParticipant.hpp>
+  #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
+  #include <fastdds/dds/publisher/Publisher.hpp>
+  #include <fastdds/dds/subscriber/Subscriber.hpp>
 #endif
 
 #ifdef PERFORMANCE_TEST_CONNEXTDDSMICRO_ENABLED
@@ -80,8 +80,19 @@ public:
   bool is_using_single_participant() const;
 
 #ifdef PERFORMANCE_TEST_FASTRTPS_ENABLED
-  /// Returns FastRTPS participant.
-  eprosima::fastrtps::Participant * fastrtps_participant() const;
+  struct FastDDSParticipant
+  {
+    std::shared_ptr<eprosima::fastdds::dds::DomainParticipantFactory> factory;
+    eprosima::fastdds::dds::DomainParticipant* participant = nullptr;
+    eprosima::fastdds::dds::Publisher* publisher = nullptr;
+    eprosima::fastdds::dds::Subscriber* subscriber = nullptr;
+
+    FastDDSParticipant(uint32_t domain_id, const eprosima::fastdds::dds::DomainParticipantQos& dp_qos);
+    ~FastDDSParticipant();
+  };
+
+  /// Returns FastDDS participant.
+  std::shared_ptr<FastDDSParticipant> fastrtps_participant() const;
 #endif
 
 #ifdef PERFORMANCE_TEST_CONNEXTDDSMICRO_ENABLED
@@ -152,7 +163,7 @@ private:
   mutable std::shared_ptr<rclcpp::Node> m_node;
 
 #ifdef PERFORMANCE_TEST_FASTRTPS_ENABLED
-  mutable eprosima::fastrtps::Participant * m_fastrtps_participant;
+  mutable std::shared_ptr<FastDDSParticipant> m_fastrtps_participant;
 #endif
 
 #ifdef PERFORMANCE_TEST_CONNEXTDDSMICRO_ENABLED

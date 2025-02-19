@@ -71,7 +71,7 @@ bool ResourceManager::is_using_single_participant() const
 
 ResourceManager::FastDDSParticipant::FastDDSParticipant(
   uint32_t domain_id,
-  const eprosima::fastdds::dds::DomainParticipantQos& dp_qos)
+  const eprosima::fastdds::dds::DomainParticipantQos & dp_qos)
 {
   factory = eprosima::fastdds::dds::DomainParticipantFactory::get_shared_instance();
   participant = factory->create_participant(domain_id, dp_qos);

@@ -83,11 +83,13 @@ public:
   struct FastDDSParticipant
   {
     std::shared_ptr<eprosima::fastdds::dds::DomainParticipantFactory> factory;
-    eprosima::fastdds::dds::DomainParticipant* participant = nullptr;
-    eprosima::fastdds::dds::Publisher* publisher = nullptr;
-    eprosima::fastdds::dds::Subscriber* subscriber = nullptr;
+    eprosima::fastdds::dds::DomainParticipant * participant = nullptr;
+    eprosima::fastdds::dds::Publisher * publisher = nullptr;
+    eprosima::fastdds::dds::Subscriber * subscriber = nullptr;
 
-    FastDDSParticipant(uint32_t domain_id, const eprosima::fastdds::dds::DomainParticipantQos& dp_qos);
+    FastDDSParticipant(
+      uint32_t domain_id,
+      const eprosima::fastdds::dds::DomainParticipantQos & dp_qos);
     ~FastDDSParticipant();
   };
 

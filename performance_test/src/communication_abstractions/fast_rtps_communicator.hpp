@@ -15,6 +15,9 @@
 #ifndef COMMUNICATION_ABSTRACTIONS__FAST_RTPS_COMMUNICATOR_HPP_
 #define COMMUNICATION_ABSTRACTIONS__FAST_RTPS_COMMUNICATOR_HPP_
 
+#include <atomic>
+#include <memory>
+
 #include <fastdds/dds/core/policy/QosPolicies.hpp>
 #include <fastdds/dds/publisher/DataWriter.hpp>
 #include <fastdds/dds/publisher/qos/DataWriterQos.hpp>
@@ -22,8 +25,6 @@
 #include <fastdds/dds/subscriber/qos/DataReaderQos.hpp>
 #include <fastdds/dds/topic/Topic.hpp>
 #include <fastdds/dds/topic/TypeSupport.hpp>
-
-#include <atomic>
 
 #include "communicator.hpp"
 #include "resource_manager.hpp"
@@ -155,8 +156,7 @@ public:
       if (!m_topic) {
         auto topic_desc = m_participant->participant->lookup_topicdescription(topic_name);
         m_topic = dynamic_cast<eprosima::fastdds::dds::Topic*>(topic_desc);
-        if (!m_topic)
-        {
+        if (!m_topic) {
           throw std::runtime_error("Failed to create topic or lookup existing topic");
         }
       }

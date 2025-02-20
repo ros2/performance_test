@@ -155,7 +155,7 @@ public:
         eprosima::fastdds::dds::TOPIC_QOS_DEFAULT);
       if (!m_topic) {
         auto topic_desc = m_participant->participant->lookup_topicdescription(topic_name);
-        m_topic = dynamic_cast<eprosima::fastdds::dds::Topic*>(topic_desc);
+        m_topic = dynamic_cast<eprosima::fastdds::dds::Topic *>(topic_desc);
         if (!m_topic) {
           throw std::runtime_error("Failed to create topic or lookup existing topic");
         }

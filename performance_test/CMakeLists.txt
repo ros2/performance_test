@@ -383,7 +383,7 @@ rosidl_target_interfaces(${EXE_NAME} ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 target_link_libraries(${EXE_NAME} PUBLIC
   rclcpp::rclcpp
-  ${OPTIONAL_AMENT_DEPENDENCES}::${OPTIONAL_AMENT_DEPENDENCES}
+  ${OPTIONAL_AMENT_DEPENDENCES}
 )
 
 # If the target exists, it means we want to build the performance test working

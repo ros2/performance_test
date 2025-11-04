@@ -381,8 +381,10 @@ add_definitions(-DPERFORMANCE_TEST_VERSION="${PERF_TEST_VERSION}")
 
 rosidl_target_interfaces(${EXE_NAME} ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
-ament_target_dependencies(${EXE_NAME}
-    "rclcpp" ${OPTIONAL_AMENT_DEPENDENCES})
+target_link_libraries(${EXE_NAME} PUBLIC
+  rclcpp::rclcpp
+  ${OPTIONAL_AMENT_DEPENDENCES}::${OPTIONAL_AMENT_DEPENDENCES}
+)
 
 # If the target exists, it means we want to build the performance test working
 # with the Connext DDS Communicator.

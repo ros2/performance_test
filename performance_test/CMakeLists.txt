@@ -286,6 +286,8 @@ target_link_libraries(${EXE_NAME} PUBLIC
 target_link_libraries(${EXE_NAME}
     ${Boost_LIBRARIES}
     ${OPTIONAL_LIBRARIES}
+    ${OPTIONAL_AMENT_DEPENDENCES}
+    rclcpp::rclcpp
     "${cpp_typesupport_target}")
 
 if(PERFORMANCE_TEST_ODB_FOR_SQL_ENABLED)

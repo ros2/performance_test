@@ -281,7 +281,6 @@ rosidl_get_typesupport_target(cpp_typesupport_target "${PROJECT_NAME}" "rosidl_t
 target_link_libraries(${EXE_NAME}
     ${Boost_LIBRARIES}
     ${OPTIONAL_LIBRARIES}
-    ${OPTIONAL_AMENT_DEPENDENCES}
     rclcpp::rclcpp
     "${cpp_typesupport_target}")
 

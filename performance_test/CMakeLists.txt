@@ -278,14 +278,10 @@ add_definitions(-DPERFORMANCE_TEST_VERSION="${PERF_TEST_VERSION}")
 
 rosidl_get_typesupport_target(cpp_typesupport_target "${PROJECT_NAME}" "rosidl_typesupport_cpp")
 
-target_link_libraries(${EXE_NAME} PUBLIC
-  rclcpp::rclcpp
-  ${OPTIONAL_AMENT_DEPENDENCES}
-)
-
 target_link_libraries(${EXE_NAME}
     ${Boost_LIBRARIES}
     ${OPTIONAL_LIBRARIES}
+    rclcpp::rclcpp
     "${cpp_typesupport_target}")
 
 if(PERFORMANCE_TEST_ODB_FOR_SQL_ENABLED)

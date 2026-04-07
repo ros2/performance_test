@@ -124,13 +124,13 @@ public:
       unlock();
       m_publisher->publish(std::move(borrowed_message));
     } else {
-      DataType data;
+      // DataType data;
       lock();
-      data.time = time;
-      data.id = next_sample_id();
+      m_data_copy->time = time;
+      m_data_copy->id = next_sample_id();
       increment_sent();  // We increment before publishing so we don't have to lock twice.
       unlock();
-      m_publisher->publish(data);
+      m_publisher->publish(*m_data_copy);
     }
   }
 

@@ -14,7 +14,9 @@
 
 #include "analysis_result.hpp"
 
-#include <sys/times.h>
+#if !defined(WIN32)
+  #include <sys/times.h>
+#endif  // !defined(WIN32)
 
 #include <iomanip>
 #include <string>
@@ -25,10 +27,12 @@
 namespace performance_test
 {
 
+#if !defined(WIN32)
 std::ostream & operator<<(std::ostream & stream, const timeval & e)
 {
   return stream << double(e.tv_sec) + double(e.tv_usec) / 1000000.0;
 }
+#endif  // !defined(WIN32)
 
 AnalysisResult::AnalysisResult(
   const std::chrono::nanoseconds experiment_start,
@@ -53,6 +57,7 @@ AnalysisResult::AnalysisResult(
   m_sub_loop_time_reserve(sub_loop_time_reserve),
   m_cpu_info(cpu_info)
 {
+#if !defined(WIN32)
   const auto ret = getrusage(RUSAGE_SELF, &m_sys_usage);
 #if defined(QNX)
   // QNX getrusage() max_rss does not give the correct value. Using a different method to get
@@ -66,6 +71,7 @@ AnalysisResult::AnalysisResult(
   if (ret != 0) {
     throw std::runtime_error("Could not get system resource usage.");
   }
+#endif  // !defined(WIN32)
   if (m_num_samples_received != static_cast<uint64_t>(m_latency.n())) {
     // TODO(andreas.pasternak): Commented out flaky assertion. Need to check if it actually a bug.
     /*throw std::runtime_error("Statistics result sample size does not match: "
@@ -170,6 +176,24 @@ std::string AnalysisResult::to_csv_string(const bool pretty_print, std::string s
    * output below
    */
 
+#if defined(WIN32)
+  ss << 0 /* m_sys_usage.ru_utime */ << st;
+  ss << 0 /* m_sys_usage.ru_stime */ << st;
+  ss << 0 /* m_sys_usage.ru_maxrss */ << st;
+  ss << 0 /* m_sys_usage.ru_ixrss */ << st;
+  ss << 0 /* m_sys_usage.ru_idrss */ << st;
+  ss << 0 /* m_sys_usage.ru_isrss */ << st;
+  ss << 0 /* m_sys_usage.ru_minflt */ << st;
+  ss << 0 /* m_sys_usage.ru_majflt */ << st;
+  ss << 0 /* m_sys_usage.ru_nswap */ << st;
+  ss << 0 /* m_sys_usage.ru_inblock */ << st;
+  ss << 0 /* m_sys_usage.ru_oublock */ << st;
+  ss << 0 /* m_sys_usage.ru_msgsnd */ << st;
+  ss << 0 /* m_sys_usage.ru_msgrcv */ << st;
+  ss << 0 /* m_sys_usage.ru_nsignals */ << st;
+  ss << 0 /* m_sys_usage.ru_nvcsw */ << st;
+  ss << 0 /* m_sys_usage.ru_nivcsw */ << st;
+#else
   ss << m_sys_usage.ru_utime << st;
   ss << m_sys_usage.ru_stime << st;
   ss << m_sys_usage.ru_maxrss << st;
@@ -186,6 +210,7 @@ std::string AnalysisResult::to_csv_string(const bool pretty_print, std::string s
   ss << m_sys_usage.ru_nsignals << st;
   ss << m_sys_usage.ru_nvcsw << st;
   ss << m_sys_usage.ru_nivcsw << st;
+#endif
 
   ss << m_cpu_info.cpu_usage() << st;
 

@@ -106,4 +106,9 @@ endforeach()
 add_library(fast_rtps_idl
     ${IDL_GEN_H_LIST} ${IDL_GEN_C_LIST} ${fastdds_LIBRARIES})
 set_compile_options(fast_rtps_idl)
+set_target_properties(fast_rtps_idl PROPERTIES
+    CXX_VISIBILITY_PRESET default
+    C_VISIBILITY_PRESET default
+    VISIBILITY_INLINES_HIDDEN OFF)
+target_compile_options(fast_rtps_idl PRIVATE -fvisibility=default)
 set(FAST_RTPS_IDL_INCLUDE_DIR ${IDL_GEN_ROOT}/.. PARENT_SCOPE)

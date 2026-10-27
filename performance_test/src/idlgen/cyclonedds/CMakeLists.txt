@@ -96,4 +96,9 @@ get_target_property(cdds_include_dir CycloneDDS::ddsc INTERFACE_INCLUDE_DIRECTOR
 include_directories("${cdds_include_dir}")
 
 set_compile_options(cyclonedds_idl)
+set_target_properties(cyclonedds_idl PROPERTIES
+    CXX_VISIBILITY_PRESET default
+    C_VISIBILITY_PRESET default
+    VISIBILITY_INLINES_HIDDEN OFF)
+target_compile_options(cyclonedds_idl PRIVATE -fvisibility=default)
 set(CYCLONEDDS_IDL_INCLUDE_DIR ${IDL_GEN_ROOT}/.. PARENT_SCOPE)

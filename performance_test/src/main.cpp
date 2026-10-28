@@ -32,5 +32,12 @@ int main(int argc, char ** argv)
     ar.run();
   }
 
+  // Shut down explicitly: otherwise the global default context is destroyed by
+  // an atexit handler, at which point some RMWs (e.g. rmw_zenoh_cpp) can no
+  // longer tear down their resources.
+  if (ec.use_ros2_layers()) {
+    rclcpp::shutdown();
+  }
+
   performance_test::ResourceManager::shutdown();
 }

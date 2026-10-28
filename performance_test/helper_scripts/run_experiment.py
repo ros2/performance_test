@@ -153,7 +153,6 @@ def signal_handler(sig, frame):
 def timer_handler(sig=None, frame=None):
     """Signal handler to handle the timer."""
     global current_index
-    global full_list
 
     [e.kill() for e in full_list]
     subprocess.Popen('killall -9 perf_test', shell=True)

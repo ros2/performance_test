@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 project(performance_test)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -359,6 +359,15 @@ endif()
 install(TARGETS
     ${EXE_NAME}
     DESTINATION lib/${PROJECT_NAME})
+
+foreach(idl_target fast_rtps_idl cyclonedds_idl opendds_idl)
+    if(TARGET ${idl_target})
+        install(TARGETS ${idl_target}
+            ARCHIVE DESTINATION lib
+            LIBRARY DESTINATION lib
+            RUNTIME DESTINATION bin)
+    endif()
+endforeach()
 
 install(PROGRAMS
     DESTINATION lib/${PROJECT_NAME})

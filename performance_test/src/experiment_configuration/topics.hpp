@@ -50,31 +50,31 @@
 
 // FastRTPS Types:
 #ifdef PERFORMANCE_TEST_FASTRTPS_ENABLED
-  #include <fast_rtps/Array1k_PubSubTypes.hpp>
-  #include <fast_rtps/Array4k_PubSubTypes.hpp>
-  #include <fast_rtps/Array16k_PubSubTypes.hpp>
-  #include <fast_rtps/Array32k_PubSubTypes.hpp>
-  #include <fast_rtps/Array60k_PubSubTypes.hpp>
-  #include <fast_rtps/Array1m_PubSubTypes.hpp>
-  #include <fast_rtps/Array2m_PubSubTypes.hpp>
-  #include <fast_rtps/Array4m_PubSubTypes.hpp>
-  #include <fast_rtps/Array8m_PubSubTypes.hpp>
+  #include <fastdds/Array1k_PubSubTypes.hpp>
+  #include <fastdds/Array4k_PubSubTypes.hpp>
+  #include <fastdds/Array16k_PubSubTypes.hpp>
+  #include <fastdds/Array32k_PubSubTypes.hpp>
+  #include <fastdds/Array60k_PubSubTypes.hpp>
+  #include <fastdds/Array1m_PubSubTypes.hpp>
+  #include <fastdds/Array2m_PubSubTypes.hpp>
+  #include <fastdds/Array4m_PubSubTypes.hpp>
+  #include <fastdds/Array8m_PubSubTypes.hpp>
 
-  #include <fast_rtps/Struct16_PubSubTypes.hpp>
-  #include <fast_rtps/Struct256_PubSubTypes.hpp>
-  #include <fast_rtps/Struct4k_PubSubTypes.hpp>
+  #include <fastdds/Struct16_PubSubTypes.hpp>
+  #include <fastdds/Struct256_PubSubTypes.hpp>
+  #include <fastdds/Struct4k_PubSubTypes.hpp>
 
-  #include <fast_rtps/PointCloud512k_PubSubTypes.hpp>
-  #include <fast_rtps/PointCloud1m_PubSubTypes.hpp>
-  #include <fast_rtps/PointCloud2m_PubSubTypes.hpp>
-  #include <fast_rtps/PointCloud4m_PubSubTypes.hpp>
-  #include <fast_rtps/PointCloud8m_PubSubTypes.hpp>
+  #include <fastdds/PointCloud512k_PubSubTypes.hpp>
+  #include <fastdds/PointCloud1m_PubSubTypes.hpp>
+  #include <fastdds/PointCloud2m_PubSubTypes.hpp>
+  #include <fastdds/PointCloud4m_PubSubTypes.hpp>
+  #include <fastdds/PointCloud8m_PubSubTypes.hpp>
 
-  #include <fast_rtps/Range_PubSubTypes.hpp>
-  #include <fast_rtps/NavSatFix_PubSubTypes.hpp>
+  #include <fastdds/Range_PubSubTypes.hpp>
+  #include <fastdds/NavSatFix_PubSubTypes.hpp>
 
-  #include <fast_rtps/RadarDetection_PubSubTypes.hpp>
-  #include <fast_rtps/RadarTrack_PubSubTypes.hpp>
+  #include <fastdds/RadarDetection_PubSubTypes.hpp>
+  #include <fastdds/RadarTrack_PubSubTypes.hpp>
 #endif
 
 // Connext DDS Micro Types:

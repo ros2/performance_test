@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMMUNICATION_ABSTRACTIONS__FAST_RTPS_COMMUNICATOR_HPP_
-#define COMMUNICATION_ABSTRACTIONS__FAST_RTPS_COMMUNICATOR_HPP_
+#ifndef COMMUNICATION_ABSTRACTIONS__FASTDDS_COMMUNICATOR_HPP_
+#define COMMUNICATION_ABSTRACTIONS__FASTDDS_COMMUNICATOR_HPP_
 
 #include <atomic>
 #include <memory>
@@ -34,19 +34,19 @@
 namespace performance_test
 {
 
-/// Translates abstract QOS settings to specific QOS settings for FastRTPS.
-class FastRTPSQOSAdapter
+/// Translates abstract QOS settings to specific QOS settings for Fast DDS.
+class FastDDSQOSAdapter
 {
 public:
   /**
    * \brief Constructs the QOS adapter.
    * \param qos The abstract QOS settings the adapter should use to derive the implementation specific QOS settings.
    */
-  explicit FastRTPSQOSAdapter(const QOSAbstraction qos)
+  explicit FastDDSQOSAdapter(const QOSAbstraction qos)
   : m_qos(qos)
   {}
 
-  /// Returns derived FastRTPS reliability setting from the stored abstract QOS setting.
+  /// Returns derived Fast DDS reliability setting from the stored abstract QOS setting.
   inline eprosima::fastdds::dds::ReliabilityQosPolicyKind reliability() const
   {
     if (m_qos.reliability == QOSAbstraction::Reliability::BEST_EFFORT) {
@@ -57,7 +57,7 @@ public:
       throw std::runtime_error("Unsupported QOS!");
     }
   }
-  /// Returns derived FastRTPS durability setting from the stored abstract QOS setting.
+  /// Returns derived Fast DDS durability setting from the stored abstract QOS setting.
   inline eprosima::fastdds::dds::DurabilityQosPolicyKind durability() const
   {
     if (m_qos.durability == QOSAbstraction::Durability::VOLATILE) {
@@ -68,7 +68,7 @@ public:
       throw std::runtime_error("Unsupported QOS!");
     }
   }
-  /// Returns derived FastRTPS history policy setting from the stored abstract QOS setting.
+  /// Returns derived Fast DDS history policy setting from the stored abstract QOS setting.
   inline eprosima::fastdds::dds::HistoryQosPolicyKind history_kind() const
   {
     if (m_qos.history_kind == QOSAbstraction::HistoryKind::KEEP_ALL) {
@@ -79,7 +79,7 @@ public:
       throw std::runtime_error("Unsupported QOS!");
     }
   }
-  /// Returns derived FastRTPS history depth setting from the stored abstract QOS setting.
+  /// Returns derived Fast DDS history depth setting from the stored abstract QOS setting.
   int32_t history_depth() const
   {
     if (m_qos.history_kind == QOSAbstraction::HistoryKind::KEEP_LAST) {
@@ -111,14 +111,14 @@ private:
 };
 
 /**
- * \brief Communication plugin for FastRTPS.
+ * \brief Communication plugin for Fast DDS.
  * \tparam Topic The topic type to use.
  *
  * The code in there is derived from
  * https://github.com/eProsima/Fast-RTPS/tree/master/examples/C%2B%2B/HelloWorldExample.
  */
 template<class Topic>
-class FastRTPSCommunicator : public Communicator
+class FastDDSCommunicator : public Communicator
 {
 public:
   /// The topic type to use.
@@ -127,7 +127,7 @@ public:
   using DataType = typename Topic::EprosimaType;
 
   /// Constructor which takes a reference \param lock to the lock to use.
-  explicit FastRTPSCommunicator(SpinLock & lock)
+  explicit FastDDSCommunicator(SpinLock & lock)
   : Communicator(lock),
     m_topic(nullptr),
     m_writer(nullptr),
@@ -176,7 +176,7 @@ public:
     namespace ef_dds = eprosima::fastdds::dds;
 
     if (!m_writer) {
-      const FastRTPSQOSAdapter qos(m_ec.qos());
+      const FastDDSQOSAdapter qos(m_ec.qos());
 
       ensure_topic_created();
 
@@ -211,7 +211,7 @@ public:
     namespace ef_dds = eprosima::fastdds::dds;
 
     if (!m_reader) {
-      const FastRTPSQOSAdapter qos(m_ec.qos());
+      const FastDDSQOSAdapter qos(m_ec.qos());
 
       ensure_topic_created();
 
@@ -274,8 +274,8 @@ private:
 };
 
 template<class Topic>
-bool FastRTPSCommunicator<Topic>::s_type_registered = false;
+bool FastDDSCommunicator<Topic>::s_type_registered = false;
 
 }  // namespace performance_test
 
-#endif  // COMMUNICATION_ABSTRACTIONS__FAST_RTPS_COMMUNICATOR_HPP_
+#endif  // COMMUNICATION_ABSTRACTIONS__FASTDDS_COMMUNICATOR_HPP_

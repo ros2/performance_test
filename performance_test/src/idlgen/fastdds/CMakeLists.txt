@@ -58,7 +58,7 @@ set(IDL_SOURCE_C
     PointField_.idl
     Vector3_.idl)
 
-set(IDL_GEN_ROOT ${CMAKE_CURRENT_BINARY_DIR}/gen/fast_rtps)
+set(IDL_GEN_ROOT ${CMAKE_CURRENT_BINARY_DIR}/gen/fastdds)
 file(MAKE_DIRECTORY ${IDL_GEN_ROOT})
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/objs/${RTIME_TARGET_NAME})
@@ -103,12 +103,12 @@ foreach(idl ${IDL_SOURCE_C})
 
 endforeach()
 
-add_library(fast_rtps_idl
+add_library(fastdds_idl
     ${IDL_GEN_H_LIST} ${IDL_GEN_C_LIST} ${fastdds_LIBRARIES})
-set_compile_options(fast_rtps_idl)
-set_target_properties(fast_rtps_idl PROPERTIES
+set_compile_options(fastdds_idl)
+set_target_properties(fastdds_idl PROPERTIES
     CXX_VISIBILITY_PRESET default
     C_VISIBILITY_PRESET default
     VISIBILITY_INLINES_HIDDEN OFF)
-target_compile_options(fast_rtps_idl PRIVATE -fvisibility=default)
-set(FAST_RTPS_IDL_INCLUDE_DIR ${IDL_GEN_ROOT}/.. PARENT_SCOPE)
+target_compile_options(fastdds_idl PRIVATE -fvisibility=default)
+set(FASTDDS_IDL_INCLUDE_DIR ${IDL_GEN_ROOT}/.. PARENT_SCOPE)

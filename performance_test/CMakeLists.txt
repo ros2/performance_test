@@ -72,8 +72,8 @@ option(PERFORMANCE_TEST_FASTRTPS_ENABLED "Enable FastRTPS" OFF)
 if(PERFORMANCE_TEST_FASTRTPS_ENABLED)
   find_package(fastdds QUIET REQUIRED)
   add_definitions(-DPERFORMANCE_TEST_FASTRTPS_ENABLED)
-  add_subdirectory(src/idlgen/fast_rtps)
-  include_directories(${FAST_RTPS_IDL_INCLUDE_DIR})
+  add_subdirectory(src/idlgen/fastdds)
+  include_directories(${FASTDDS_IDL_INCLUDE_DIR})
 endif()
 
 # RTI Connext Micro
@@ -210,7 +210,7 @@ if(PERFORMANCE_TEST_CALLBACK_EXECUTOR_ENABLED OR PERFORMANCE_TEST_POLLING_SUBSCR
 endif()
 
 if(PERFORMANCE_TEST_FASTRTPS_ENABLED)
-  list(APPEND sources src/communication_abstractions/fast_rtps_communicator.hpp)
+  list(APPEND sources src/communication_abstractions/fastdds_communicator.hpp)
 endif()
 
 if(PERFORMANCE_TEST_CONNEXTDDSMICRO_ENABLED)
@@ -312,7 +312,7 @@ endif()
 if(PERFORMANCE_TEST_FASTRTPS_ENABLED)
   target_link_libraries(${EXE_NAME}
       fastdds
-      fast_rtps_idl
+      fastdds_idl
       fastcdr)
 endif()
 
@@ -360,7 +360,7 @@ install(TARGETS
     ${EXE_NAME}
     DESTINATION lib/${PROJECT_NAME})
 
-foreach(idl_target fast_rtps_idl cyclonedds_idl opendds_idl)
+foreach(idl_target fastdds_idl cyclonedds_idl opendds_idl)
     if(TARGET ${idl_target})
         install(TARGETS ${idl_target}
             ARCHIVE DESTINATION lib

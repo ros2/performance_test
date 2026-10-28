@@ -24,6 +24,13 @@ int main(int argc, char ** argv)
 
   rclcpp::init(argc, argv);
 
-  performance_test::AnalyzeRunner ar;
-  ar.run();
+  {
+    performance_test::AnalyzeRunner ar;
+    ar.run();
+  }
+
+  // Shut down explicitly: otherwise the global default context is destroyed by
+  // an atexit handler, at which point some RMWs (e.g. rmw_zenoh_cpp) can no
+  // longer tear down their resources.
+  rclcpp::shutdown();
 }

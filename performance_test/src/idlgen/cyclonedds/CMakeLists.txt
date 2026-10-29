@@ -79,7 +79,7 @@ foreach(idl ${SUPP_IDL_SOURCE_C} ${IDL_SOURCE_C})
   add_custom_command(
     OUTPUT   ${IDL_GEN_C} ${IDL_GEN_H}
     COMMAND  CycloneDDS::idlc
-    ARGS     -fcase-sensitive -fkeylist ${IDL_GEN_ROOT}/${basename}.idl
+    ARGS     -x final -fcase-sensitive -fkeylist ${IDL_GEN_ROOT}/${basename}.idl
     DEPENDS  ${CMAKE_CURRENT_SOURCE_DIR}/${idl}
     COMMENT  "Running idlc on ${FIL}"
     WORKING_DIRECTORY ${IDL_GEN_ROOT}

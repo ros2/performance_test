@@ -24,6 +24,10 @@ set(OPTIONAL_LIBRARIES)
 
 # Default to C++14
 set(CMAKE_CXX_STANDARD 14)
+# Use the BoostConfig.cmake shipped with Boost instead of the removed FindBoost module
+if(POLICY CMP0167)
+  cmake_policy(SET CMP0167 NEW)
+endif()
 find_package(Boost COMPONENTS program_options timer REQUIRED)
 find_package(ament_cmake REQUIRED)
 
@@ -265,6 +269,11 @@ endif()
 set(EXE_NAME perf_test)
 
 add_executable(${EXE_NAME} ${${PROJECT_NAME}_SOURCES} ${sources} ${${PROJECT_NAME}_HEADERS})
+
+# GCC 12+ reports a false positive -Wnull-dereference from inside
+# boost::program_options::typed_value<std::string>::notify().
+set_source_files_properties(src/experiment_configuration/experiment_configuration.cpp
+  PROPERTIES COMPILE_OPTIONS -Wno-null-dereference)
 
 set_compile_options(${EXE_NAME})
 
